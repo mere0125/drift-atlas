@@ -21,6 +21,8 @@ Requested variables: `ID`, `time`, `latitude`, `longitude`, `ve`, `vn`, `sst`, a
 
 The second line of NOAA's CSV stores units rather than an observation. The analysis skips that line but does not alter the downloaded file.
 
+The CSV units row does not label `ve` and `vn`. NOAA's source NetCDF files define them as eastward and northward velocity calculated with a 12-hour centered difference, in meters per second. They also identify `-999999` as the fill value for both fields.
+
 - File: `noaa_gdp_6hour_western_north_atlantic_2024.csv`
 - Size: 6,126,559 bytes
 - SHA-256: `900f7233f0b4ae73d5e3196bcab222af00fe86e8772d568360e0a6a048db1a98`

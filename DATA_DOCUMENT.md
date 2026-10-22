@@ -65,12 +65,12 @@ The full NOAA source currently reports global coverage from February 15, 1979 th
 | `time` | UTC date-time | Time of the six-hour estimate | Filter by month and order each path |
 | `latitude` | Decimal number | Latitude in degrees north | Position and spatial search |
 | `longitude` | Decimal number | Longitude in degrees east; western longitudes are negative | Position and spatial search |
-| `ve` | Decimal number | Eastward velocity component | Direction and derived horizontal speed |
-| `vn` | Decimal number | Northward velocity component | Direction and derived horizontal speed |
+| `ve` | Decimal number | Eastward velocity from a 12-hour centered difference, in m/s | Direction and derived horizontal speed |
+| `vn` | Decimal number | Northward velocity from a 12-hour centered difference, in m/s | Direction and derived horizontal speed |
 | `sst` | Decimal number | Sea-surface bulk temperature in °C | Optional context, only where available |
 | `drogue_lost_date` | UTC date-time or fill value | Recorded date of drogue loss; a fill value means it was still attached | Label each position as drogued or undrogued |
 
-I derive `speed_m_s = sqrt(ve² + vn²)`. Month, drogue status, and a five-degree grid cell are also derived for validation; they are not extra source columns.
+I derive `speed_m_s = sqrt(ve² + vn²)`. The ERDDAP CSV leaves the `ve` and `vn` unit cells blank, but NOAA's source NetCDF attributes identify both as 12-hour centered-difference velocities in m/s. Month, drogue status, and a five-degree grid cell are also derived for validation; they are not extra source columns.
 
 ### Natural Earth coastline file
 
