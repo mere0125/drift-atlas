@@ -1,6 +1,6 @@
 # Drift Atlas - data document
 
-Accessed and analyzed October 22, 2026  
+Data accessed October 22, 2026 - Analysis reviewed October 25, 2026
 Mere Cui
 
 ## What I am planning to make
