@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Drift Atlas is an interactive archive of NOAA surface drifter tracks in the western North Atlantic during 2024.">
+  <title>Drift Atlas - Mere Cui</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#explorer">Skip to the interactive map</a>
+
+  <header class="site-header">
+    <a class="wordmark" href="#top" aria-label="Drift Atlas home">Drift Atlas</a>
+    <nav aria-label="Main navigation">
+      <a href="#about">About</a>
+      <a href="#explorer">Explore</a>
+      <a href="#notes">Data notes</a>
+    </nav>
+  </header>
+
+  <main id="top">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-grid" aria-hidden="true"></div>
+      <div class="hero-folio" aria-hidden="true">North Atlantic plate 01</div>
+
+      <svg id="hero-map" class="hero-map" role="img" aria-label="Real NOAA drifter routes near 36 degrees north and 69 degrees west in May 2024"></svg>
+
+      <figure class="hero-photo">
+        <img src="assets/drifter-water.jpg" alt="A NOAA surface drifter floating in the ocean">
+        <figcaption>NOAA surface drifter at sea</figcaption>
+      </figure>
+
+      <div class="hero-copy">
+        <p class="eyebrow">An archive of recorded ocean movement</p>
+        <h1 id="hero-title">Drift<br>Atlas</h1>
+        <p class="hero-intro">Choose a place and a month. Find the NOAA drifters that passed nearby, then follow the routes preserved in the archive.</p>
+        <p class="hero-caveat">Historical observations, not a forecast.</p>
+        <a class="enter-link" href="#explorer">Open the atlas <span aria-hidden="true">↓</span></a>
+      </div>
+
+      <p class="hero-coordinate">May 2024<br>36°N, 69°W</p>
+    </section>
+
+    <section id="about" class="about-section section-page" aria-labelledby="about-title">
+      <div class="margin-number" aria-hidden="true">01</div>
+      <div class="about-copy">
+        <p class="section-kicker">Before the search</p>
+        <h2 id="about-title">How the ocean writes a line</h2>
+        <p>A surface drifter is a small scientific instrument released into the ocean. Its float reports a sequence of positions. Read in order, those positions become a record of where the water carried it.</p>
+        <p>A fabric sea anchor called a <em>drogue</em> hangs about 15 meters below the surface. When the drogue is attached, the instrument follows the water more closely. After it is lost, wind and waves have more influence on the float.</p>
+        <p class="ink-note">That difference stays visible in every route detail.</p>
+      </div>
+
+      <figure class="deployment-figure">
+        <img src="assets/drifter-deployment.jpg" alt="Researchers deploying a NOAA surface drifter from a ship">
+        <figcaption>
+          <span>Deploying a surface drifter</span>
+          <span>Photo: NOAA AOML</span>
+        </figcaption>
+      </figure>
+
+      <aside class="anatomy-note" aria-label="Simplified drifter anatomy">
+        <div class="float-mark" aria-hidden="true"></div>
+        <div class="tether-mark" aria-hidden="true"></div>
+        <div class="drogue-mark" aria-hidden="true"></div>
+        <p class="float-label">surface float</p>
+        <p class="drogue-label">drogue near 15 m</p>
+      </aside>
+    </section>
+
+    <section id="explorer" class="explorer-section" aria-labelledby="explorer-title">
+      <div class="explorer-heading">
+        <div>
+          <p class="section-kicker">The working prototype</p>
+          <h2 id="explorer-title">Search the archive</h2>
+        </div>
+        <p>Click a point in the mapped region, choose a month, and decide how close a drifter had to pass. The result shows recorded routes from the selected month.</p>
+      </div>
+
+      <form id="search-form" class="search-controls">
+        <label class="control-field">
+          <span>Month</span>
+          <select id="month-select" name="month">
+            <option value="0">January 2024</option>
+            <option value="1">February 2024</option>
+            <option value="2">March 2024</option>
+            <option value="3">April 2024</option>
+            <option value="4" selected>May 2024</option>
+            <option value="5">June 2024</option>
+            <option value="6">July 2024</option>
+            <option value="7">August 2024</option>
+            <option value="8">September 2024</option>
+            <option value="9">October 2024</option>
+            <option value="10">November 2024</option>
+            <option value="11">December 2024</option>
+          </select>
+        </label>
+
+        <label class="control-field radius-field">
+          <span>Search radius <output id="radius-output" for="radius-input">180 km</output></span>
+          <input id="radius-input" name="radius" type="range" min="50" max="500" step="10" value="180">
+        </label>
+
+        <div class="control-field location-field">
+          <span>Selected place</span>
+          <output id="location-output" aria-live="polite">36.00°N, 69.00°W</output>
+        </div>
+
+        <button id="search-button" class="search-button" type="submit">Find drifters</button>
+        <button id="example-button" class="text-button" type="button">Return to the May example</button>
+      </form>
+
+      <div class="map-layout">
+        <div class="map-column">
+          <div id="map-frame" class="map-frame">
+            <svg id="atlas-map" role="img" aria-labelledby="map-title map-desc">
+              <title id="map-title">Interactive map of NOAA drifter routes</title>
+              <desc id="map-desc">A projected map of the western North Atlantic. Click the ocean to choose a search location, then use the controls to find drifters.</desc>
+            </svg>
+            <div id="map-tooltip" class="map-tooltip" role="tooltip" hidden></div>
+            <div id="map-loading" class="map-loading" aria-live="polite">Opening the archive…</div>
+            <p class="map-instruction">Click the ocean to move the search point</p>
+          </div>
+
+          <div class="map-caption">
+            <p id="result-summary" aria-live="polite">Loading NOAA records…</p>
+            <p>Lines break when more than 12 hours are absent from this regional extract.</p>
+          </div>
+        </div>
+
+        <aside class="route-index" aria-labelledby="route-index-title">
+          <div class="route-index-heading">
+            <p class="folio-label">Routes found</p>
+            <h3 id="route-index-title">May field notes</h3>
+          </div>
+
+          <div id="route-list" class="route-list" aria-live="polite"></div>
+
+          <section id="route-detail" class="route-detail" aria-labelledby="detail-title">
+            <p class="detail-prompt">Select a route on the map or in the index.</p>
+          </section>
+        </aside>
+      </div>
+    </section>
+
+    <section class="reading-section section-page" aria-labelledby="reading-title">
+      <div class="margin-number" aria-hidden="true">02</div>
+      <div class="reading-intro">
+        <p class="section-kicker">Reading the result</p>
+        <h2 id="reading-title">What the lines can and cannot say</h2>
+      </div>
+
+      <article class="reading-note note-one">
+        <span aria-hidden="true">a</span>
+        <h3>One line is one instrument</h3>
+        <p>A route records what happened to a particular drifter under particular conditions. It does not describe every current in the surrounding ocean.</p>
+      </article>
+
+      <article class="reading-note note-two">
+        <span aria-hidden="true">b</span>
+        <h3>Drogue status changes the reading</h3>
+        <p>An attached drogue helps the float follow water near 15 meters depth. After drogue loss, the path responds more strongly to wind and waves.</p>
+      </article>
+
+      <article class="reading-note note-three">
+        <span aria-hidden="true">c</span>
+        <h3>Empty space is still a data condition</h3>
+        <p>No result means no drifter in this extract recorded the chosen place and month. It does not mean the water stood still.</p>
+      </article>
+    </section>
+
+    <section id="notes" class="data-section" aria-labelledby="data-title">
+      <div class="data-heading">
+        <p class="section-kicker">Data notes</p>
+        <h2 id="data-title">What is inside this prototype</h2>
+      </div>
+
+      <p class="data-lede">This prototype uses 65,625 quality-controlled six-hour positions from 150 NOAA surface drifters in the western North Atlantic during 2024.</p>
+
+      <dl class="data-ledger">
+        <div>
+          <dt>Time</dt>
+          <dd>January 1 to December 31, 2024 UTC</dd>
+        </div>
+        <div>
+          <dt>Region</dt>
+          <dd>30°N to 50°N and 75°W to 40°W</dd>
+        </div>
+        <div>
+          <dt>Position interval</dt>
+          <dd>Six-hour quality-controlled estimates</dd>
+        </div>
+        <div>
+          <dt>Source status</dt>
+          <dd>Historical delayed-mode archive, not live tracking</dd>
+        </div>
+      </dl>
+
+      <div class="source-copy">
+        <p>Data: NOAA Global Drifter Program, six-hour interpolated quality-controlled drifter data. The map uses Natural Earth land boundaries distributed through world-atlas.</p>
+        <p><a href="https://doi.org/10.25921/7ntx-z961">Dataset DOI</a> <a href="DATA_DOCUMENT.md">Complete data document</a> <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a></p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>Drift Atlas</p>
+    <p>Mere Cui - 2026</p>
+    <p>Prototype 1</p>
+  </footer>
+
+  <script src="vendor/d3.min.js"></script>
+  <script src="vendor/topojson-client.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

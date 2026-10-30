@@ -1,8 +1,30 @@
 # Drift Atlas
 
-Drift Atlas is my final project for Data Visualization. The proposed site will let someone choose an ocean area and a month, then see which NOAA surface drifters passed through that place and where the water carried them.
+Drift Atlas is an interactive website for exploring historical NOAA surface-drifter tracks. A visitor can choose a place in the western North Atlantic, select a month, and find the drifters that passed nearby during 2024.
 
-This repository currently contains the data acquisition and validation stage of the project.
+The site uses historical observations. It does not predict a future route or represent every current in the selected area.
+
+## Prototype 1
+
+The working prototype includes:
+
+- all twelve months of the 2024 regional extract
+- map-based location selection
+- an adjustable search radius
+- real spatial filtering of NOAA observations
+- interactive monthly routes and individual drifter details
+- explicit drogue status and archive limitations
+- route breaks wherever the regional extract has a gap longer than 12 hours
+
+## Open the website locally
+
+The site loads local CSV and TopoJSON files, so it must run through a web server rather than by double-clicking `index.html`.
+
+```bash
+python3 -m http.server 8765
+```
+
+Then open `http://localhost:8765/`.
 
 ## Assignment document
 
@@ -10,6 +32,9 @@ Read [DATA_DOCUMENT.md](DATA_DOCUMENT.md) for the complete data sources, dimensi
 
 ## Repository contents
 
+- `index.html`, `styles.css`, `app.js` - the published interactive site
+- `assets/` - credited NOAA photographs used by the narrative
+- `vendor/` - local copies of D3 and topojson-client
 - `data/` - the downloaded NOAA working extract, coastline data, and exact download record
 - `analysis/` - descriptive-statistics tables, charts, validation results, and the executed notebook
 - `scripts/` - reproducible Python analysis and notebook builder
