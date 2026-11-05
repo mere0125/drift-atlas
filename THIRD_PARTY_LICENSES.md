@@ -97,3 +97,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 Source: https://github.com/mrdoob/three.js/blob/r160/LICENSE
+
+The same Three.js MIT license applies to the locally bundled r160 example
+modules `vendor/Water.js` and `vendor/Sky.js`, and the example texture
+`assets/waternormals.jpg`. The module imports have been changed to the local
+Three.js file. The application adds water displacement and procedural clouds
+at runtime.
+
+Sources:
+- https://github.com/mrdoob/three.js/blob/r160/examples/jsm/objects/Water.js
+- https://github.com/mrdoob/three.js/blob/r160/examples/jsm/objects/Sky.js
+- https://github.com/mrdoob/three.js/blob/r160/examples/textures/waternormals.jpg

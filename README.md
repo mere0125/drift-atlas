@@ -1,6 +1,6 @@
 # Drift Atlas
 
-Drift Atlas is an interactive website for exploring historical NOAA surface-drifter tracks. A visitor can choose a place in the western North Atlantic, select a month, and find the drifters that passed nearby during 2024.
+Drift Atlas is an immersive ocean interface for exploring historical NOAA surface-drifter tracks. A visitor chooses a place in the western North Atlantic and a month in 2024, finds nearby instruments, then follows an individual regional record in the same ocean scene.
 
 The site uses historical observations. It does not predict a future route or represent every current in the selected area.
 
@@ -8,6 +8,9 @@ The site uses historical observations. It does not predict a future route or rep
 
 The working prototype includes:
 
+- a full-screen Three.js ocean with reflected sky, layered water normals, moving swells and a simplified floating instrument
+- a separate introduction and source document accessed through About this project
+- an archive search chart opened over the sea
 - all twelve months of the 2024 regional extract
 - map-based location selection
 - an adjustable search radius
@@ -17,6 +20,12 @@ The working prototype includes:
 - explicit before, near, and after stages around the selected place
 - explicit drogue status and archive limitations
 - route breaks wherever the regional extract has a gap longer than 12 hours
+
+The animated water and weather are illustrative. In follow mode, the drifter
+and its route use a local Mercator frame calculated from the actual record.
+The accompanying geographic chart retains coastline and coordinate context.
+Waterline and overhead views, pause/resume for the water, and the historical
+record timeline are separate controls. Playback is accelerated.
 
 The project uses 2024 because it is the latest complete calendar year in the
 NOAA delayed-mode quality-controlled source used by this prototype. The source
@@ -44,7 +53,7 @@ Read [DATA_DOCUMENT.md](DATA_DOCUMENT.md) for the complete data sources, dimensi
 
 ## Repository contents
 
-- `index.html`, `styles.css`, `app.js`, `ocean.js` - the published interactive site
+- `index.html`, `styles.css`, `app.js`, `ocean.js`, `experience.js` - the published interactive site
 - `assets/` - credited NOAA photographs used by the narrative
 - `vendor/` - local copies of D3 and topojson-client
 - `data/` - the downloaded NOAA working extract, coastline data, and exact download record

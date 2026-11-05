@@ -55,6 +55,8 @@
     journeyId: null,
     journeyIndex: 0,
     journeyTimer: null,
+    journeyCenter: null,
+    journeyRadiusKm: null,
   };
 
   const dom = {
@@ -217,6 +219,7 @@
 
   function renderHero() {
     const node = dom.heroSvg.node();
+    if (!node) return;
     const rect = node.getBoundingClientRect();
     const width = Math.max(760, Math.round(rect.width || 1100));
     const height = Math.max(520, Math.round(rect.height || 720));
@@ -290,13 +293,13 @@
     const svg = dom.mapSvg;
     const frameRect = dom.mapFrame.getBoundingClientRect();
     const width = Math.max(520, Math.round(frameRect.width));
-    const height = window.innerWidth <= 760 ? 520 : 680;
+    const height = 345;
     const projection = projectionFor(width, height, window.innerWidth <= 760 ? 28 : 38);
     const path = d3.geoPath(projection);
     const line = d3.line()
       .x((row) => projection([row.longitude, row.latitude])[0])
       .y((row) => projection([row.longitude, row.latitude])[1])
-      .curve(d3.curveCatmullRom.alpha(0.35));
+      .curve(d3.curveLinear);
 
     state.projection = projection;
     svg.attr("viewBox", `0 0 ${width} ${height}`).selectAll("g, rect.map-ocean, path.map-border").remove();
@@ -607,6 +610,7 @@
       <button class="follow-button" type="button" data-follow-id="${match.id}">Follow this drifter through 2024</button>
     `;
     dom.routeDetail.querySelector("[data-follow-id]")?.addEventListener("click", () => openJourney(match.id));
+    dom.routeDetail.querySelector("[data-follow-id]").disabled = state.dirty;
   }
 
   function stopJourney() {
@@ -617,8 +621,8 @@
   }
 
   function journeyStage(row, encounter) {
-    const distance = haversineKm(state.center, [row.longitude, row.latitude]);
-    if (distance <= state.radiusKm) return "Near your selected place";
+    const distance = haversineKm(state.journeyCenter, [row.longitude, row.latitude]);
+    if (distance <= state.journeyRadiusKm) return "Near your selected place";
     return row.time < encounter.time ? "Before the encounter" : "After the encounter";
   }
 
@@ -630,7 +634,10 @@
     state.journeyIndex = Math.max(0, Math.min(rows.length - 1, Number(index)));
     dom.journeyRange.value = String(state.journeyIndex);
     const row = rows[state.journeyIndex];
-    const distance = haversineKm(state.center, [row.longitude, row.latitude]);
+    window.dispatchEvent(new CustomEvent("drift:position", {
+      detail: { id: state.journeyId, rows, index: state.journeyIndex },
+    }));
+    const distance = haversineKm(state.journeyCenter, [row.longitude, row.latitude]);
     const status = drogueStatus(row);
 
     dom.journeyStage.textContent = journeyStage(row, match.closestRow);
@@ -650,7 +657,7 @@
     const line = d3.line()
       .x((point) => projection([point.longitude, point.latitude])[0])
       .y((point) => projection([point.longitude, point.latitude])[1])
-      .curve(d3.curveCatmullRom.alpha(0.35));
+      .curve(d3.curveLinear);
     const travelledLayer = dom.journeySvg.select(".journey-travelled");
     travelledLayer.selectAll("path")
       .data(splitAtGaps(travelledRows).filter((segment) => segment.length > 1))
@@ -664,14 +671,14 @@
     if (!rows.length || !match) return;
 
     const width = Math.max(620, Math.round(dom.journeySvg.node().getBoundingClientRect().width || 1100));
-    const height = window.innerWidth <= 760 ? 520 : 680;
+    const height = 420;
     const projection = projectionFor(width, height, window.innerWidth <= 760 ? 28 : 42);
     dom.journeySvg.node().__projection = projection;
     const geoPath = d3.geoPath(projection);
     const line = d3.line()
       .x((row) => projection([row.longitude, row.latitude])[0])
       .y((row) => projection([row.longitude, row.latitude])[1])
-      .curve(d3.curveCatmullRom.alpha(0.35));
+      .curve(d3.curveLinear);
 
     dom.journeySvg.attr("viewBox", `0 0 ${width} ${height}`).selectAll("*").remove();
     dom.journeySvg.append("rect").attr("class", "journey-ocean").attr("width", width).attr("height", height);
@@ -689,7 +696,7 @@
     dom.journeySvg.append("g").attr("class", "journey-travelled");
 
     dom.journeySvg.append("path")
-      .datum(d3.geoCircle().center(state.center).radius(state.radiusKm / 111.32).precision(2)())
+      .datum(d3.geoCircle().center(state.journeyCenter).radius(state.journeyRadiusKm / 111.32).precision(2)())
       .attr("class", "journey-search-area")
       .attr("d", geoPath);
     const encounterXY = projection([match.closestRow.longitude, match.closestRow.latitude]);
@@ -698,27 +705,44 @@
       .attr("cx", encounterXY[0])
       .attr("cy", encounterXY[1])
       .attr("r", 7);
-    dom.journeySvg.append("circle").attr("class", "journey-current").attr("r", 6);
+    dom.journeySvg.append("circle").attr("class", "journey-current").attr("r", 5);
+    const labels = dom.journeySvg.append("g");
+    addCoordinateLabels(labels, projection, width, height);
+    labels.selectAll("text").classed("journey-coordinate", true);
 
     dom.journeyRange.max = String(rows.length - 1);
     dom.journeyRange.value = "0";
-    dom.journeyId.textContent = `Drifter ${shortId(state.journeyId)} - NOAA ID ${state.journeyId}`;
-    dom.journeyIntro.textContent = `This is the portion of drifter ${shortId(state.journeyId)} preserved inside the 2024 western North Atlantic extract.`;
-    dom.journeyBoundaryNote.textContent = `The record shown runs from ${formatUtc(rows[0].time)} to ${formatUtc(rows[rows.length - 1].time)}. Its beginning or end may mark the regional boundary or a data gap, not the physical start or stop of the instrument.`;
-    updateJourney(0);
+    dom.journeyId.textContent = `NOAA ${state.journeyId}`;
+    document.querySelector("#journey-title").textContent = `Drifter ${shortId(state.journeyId)}`;
+    dom.journeyIntro.textContent = `Closest pass: ${formatUtc(match.closestRow.time)} - ${match.closestDistanceKm.toFixed(0)} km from your place.`;
+    dom.journeyBoundaryNote.textContent = "Visible 2024 regional record. Gaps and boundaries can shorten the track. Playback is accelerated; the water is illustrative.";
+    document.querySelector("#journey-first").textContent = formatUtc(rows[0].time);
+    document.querySelector("#journey-last").textContent = formatUtc(rows[rows.length - 1].time);
+    updateJourney(state.journeyIndex);
   }
 
   function openJourney(id) {
+    if (state.dirty) return;
     stopJourney();
     state.journeyId = id;
+    state.journeyCenter = [...state.center];
+    state.journeyRadiusKm = state.radiusKm;
     state.journeyIndex = 0;
     dom.journeyEmpty.hidden = true;
     dom.journeyPlayer.hidden = false;
+    dom.journey.hidden = false;
     renderJourney();
-    dom.journey.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+    window.dispatchEvent(new CustomEvent("drift:opened"));
   }
 
   function bindJourney() {
+    document.querySelector("#jump-encounter").addEventListener("click", () => {
+      const match = state.matches.find((item) => item.id === state.journeyId);
+      const rows = state.byId.get(state.journeyId) || [];
+      if (!match) return;
+      stopJourney();
+      updateJourney(rows.findIndex((row) => row.time.getTime() === match.closestRow.time.getTime()));
+    });
     dom.journeyRange.addEventListener("input", () => {
       stopJourney();
       updateJourney(dom.journeyRange.value);
@@ -743,6 +767,7 @@
   }
 
   function selectRoute(id) {
+    if (state.dirty) return;
     state.selectedId = state.selectedId === id ? null : id;
     updateRouteClasses();
     document.querySelectorAll(".route-result").forEach((button) => {
@@ -755,6 +780,8 @@
   function markDirty() {
     state.dirty = true;
     dom.searchButton.classList.add("is-dirty");
+    dom.resultSummary.textContent = "Select Find drifters to update the results for these search conditions.";
+    document.querySelectorAll(".route-result, [data-follow-id]").forEach((button) => { button.disabled = true; });
   }
 
   function runSearch({ preserveSelection = false } = {}) {
@@ -764,6 +791,7 @@
       state.journeyId = null;
       dom.journeyPlayer.hidden = true;
       dom.journeyEmpty.hidden = false;
+      window.dispatchEvent(new CustomEvent("drift:reset"));
       dom.journeyIntro.textContent = "Choose a route above, then follow its visible 2024 record before and after it came near your selected place.";
     }
     state.matches = findMatches(state.month, state.center, state.radiusKm);
@@ -816,6 +844,14 @@
     });
 
     dom.exampleButton.addEventListener("click", setDefaultSearch);
+    document.querySelector("#quick-follow").addEventListener("click", () => {
+      setDefaultSearch();
+      if (state.visibleMatches[0]) openJourney(state.visibleMatches[0].id);
+    });
+    window.addEventListener("drift:search-open", () => {
+      if (state.data.length) renderMap();
+    });
+    window.addEventListener("drift:home", stopJourney);
   }
 
   async function load() {
@@ -877,6 +913,8 @@
       renderHero();
       setDefaultSearch();
       dom.mapLoading.classList.add("is-hidden");
+      document.querySelector("#quick-follow").disabled = false;
+      document.querySelector("#quick-follow").textContent = "Follow a drifter first";
 
       let resizeTimer;
       const observer = new ResizeObserver(() => {
