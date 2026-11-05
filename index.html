@@ -15,31 +15,29 @@
     <nav aria-label="Main navigation">
       <a href="#about">About</a>
       <a href="#explorer">Explore</a>
+      <a href="#journey">Follow</a>
       <a href="#notes">Data notes</a>
     </nav>
   </header>
 
   <main id="top">
     <section class="hero" aria-labelledby="hero-title">
+      <canvas id="ocean-scene" class="ocean-scene" aria-hidden="true"></canvas>
       <div class="hero-grid" aria-hidden="true"></div>
-      <div class="hero-folio" aria-hidden="true">North Atlantic plate 01</div>
+      <div class="hero-folio" aria-hidden="true">Western North Atlantic - 2024 archive</div>
 
       <svg id="hero-map" class="hero-map" role="img" aria-label="Real NOAA drifter routes near 36 degrees north and 69 degrees west in May 2024"></svg>
 
-      <figure class="hero-photo">
-        <img src="assets/drifter-water.jpg" alt="A NOAA surface drifter floating in the ocean">
-        <figcaption>NOAA surface drifter at sea</figcaption>
-      </figure>
-
       <div class="hero-copy">
-        <p class="eyebrow">An archive of recorded ocean movement</p>
+        <p class="eyebrow">NOAA surface drifter records</p>
         <h1 id="hero-title">Drift<br>Atlas</h1>
-        <p class="hero-intro">Choose a place and a month. Find the NOAA drifters that passed nearby, then follow the routes preserved in the archive.</p>
-        <p class="hero-caveat">Historical observations, not a forecast.</p>
+        <p class="hero-intro">Begin with a place. See which instruments came near it, then follow one recorded path before and after the encounter.</p>
+        <p class="hero-caveat">2024 historical observations - not real-time tracking or a forecast.</p>
         <a class="enter-link" href="#explorer">Open the atlas <span aria-hidden="true">↓</span></a>
       </div>
 
-      <p class="hero-coordinate">May 2024<br>36°N, 69°W</p>
+      <p class="hero-coordinate">Example entry point<br>May 2024 - 36°N, 69°W</p>
+      <p class="ocean-note">Move across the water</p>
     </section>
 
     <section id="about" class="about-section section-page" aria-labelledby="about-title">
@@ -144,6 +142,49 @@
       </div>
     </section>
 
+    <section id="journey" class="journey-section" aria-labelledby="journey-title">
+      <div class="journey-heading">
+        <p class="section-kicker">One instrument through time</p>
+        <h2 id="journey-title">Follow a recorded path</h2>
+        <p id="journey-intro">Choose a route above, then follow its visible 2024 record before and after it came near your selected place.</p>
+      </div>
+
+      <div id="journey-empty" class="journey-empty">
+        <p>No route is open yet.</p>
+        <a href="#explorer">Choose a drifter in the map</a>
+      </div>
+
+      <div id="journey-player" class="journey-player" hidden>
+        <div class="journey-map-wrap">
+          <svg id="journey-map" role="img" aria-labelledby="journey-map-title journey-map-desc">
+            <title id="journey-map-title">Full visible 2024 path of the selected drifter</title>
+            <desc id="journey-map-desc">A projected map animating the selected drifter through its observations in the western North Atlantic regional extract.</desc>
+          </svg>
+          <div class="journey-stage" aria-live="polite">
+            <span id="journey-stage-label">Before the encounter</span>
+            <strong id="journey-date">-</strong>
+          </div>
+        </div>
+
+        <div class="journey-controls">
+          <button id="journey-play" class="journey-play" type="button">Play route</button>
+          <label for="journey-range">Move through this drifter's 2024 record</label>
+          <input id="journey-range" type="range" min="0" max="1" value="0" step="1">
+          <div class="journey-phases" aria-hidden="true"><span>before</span><span>near your place</span><span>after</span></div>
+        </div>
+
+        <aside class="journey-record" aria-live="polite">
+          <p id="journey-id" class="journey-id"></p>
+          <dl>
+            <div><dt>Recorded position</dt><dd id="journey-position">-</dd></div>
+            <div><dt>Distance from your place</dt><dd id="journey-distance">-</dd></div>
+            <div><dt>Drogue</dt><dd id="journey-drogue">-</dd></div>
+          </dl>
+          <p id="journey-boundary-note" class="journey-boundary-note"></p>
+        </aside>
+      </div>
+    </section>
+
     <section class="reading-section section-page" aria-labelledby="reading-title">
       <div class="margin-number" aria-hidden="true">02</div>
       <div class="reading-intro">
@@ -176,7 +217,7 @@
         <h2 id="data-title">What is inside this prototype</h2>
       </div>
 
-      <p class="data-lede">This prototype uses 65,625 quality-controlled six-hour positions from 150 NOAA surface drifters in the western North Atlantic during 2024.</p>
+      <p class="data-lede">This prototype uses 65,625 quality-controlled six-hour positions from 150 NOAA surface drifters in the western North Atlantic during 2024. That is the latest complete calendar year in the delayed-mode source used here.</p>
 
       <dl class="data-ledger">
         <div>
@@ -193,13 +234,13 @@
         </div>
         <div>
           <dt>Source status</dt>
-          <dd>Historical delayed-mode archive, not live tracking</dd>
+          <dd>Historical delayed-mode archive, not live tracking; source coverage currently ends June 18, 2025</dd>
         </div>
       </dl>
 
       <div class="source-copy">
         <p>Data: NOAA Global Drifter Program, six-hour interpolated quality-controlled drifter data. The map uses Natural Earth land boundaries distributed through world-atlas.</p>
-        <p><a href="https://doi.org/10.25921/7ntx-z961">Dataset DOI</a> <a href="DATA_DOCUMENT.md">Complete data document</a> <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a></p>
+        <p><a href="https://doi.org/10.25921/7ntx-z961">Dataset DOI</a> <a href="https://erddap.aoml.noaa.gov/gdp/erddap/info/drifter_6hour_qc/index.html">NOAA source metadata</a> <a href="DATA_DOCUMENT.md">Complete data document</a> <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a></p>
       </div>
     </section>
   </main>
@@ -207,11 +248,12 @@
   <footer>
     <p>Drift Atlas</p>
     <p>Mere Cui - 2026</p>
-    <p>Prototype 1</p>
+    <p><a href="peer-test.html">Peer test guide</a></p>
   </footer>
 
   <script src="vendor/d3.min.js"></script>
   <script src="vendor/topojson-client.min.js"></script>
+  <script type="module" src="ocean.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

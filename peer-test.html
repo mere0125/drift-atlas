@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Drift Atlas - Peer User Test</title>
+  <style>
+    :root { color-scheme: light; --ink:#0a2840; --paper:#eee8d8; --aqua:#6ec8c4; --rust:#c95338; }
+    * { box-sizing: border-box; }
+    body { margin:0; color:var(--ink); background:var(--paper); font-family:Arial, sans-serif; line-height:1.5; }
+    main { width:min(920px, calc(100% - 40px)); margin:0 auto; padding:9vh 0 12vh; }
+    header { display:grid; grid-template-columns:1.2fr .8fr; gap:5vw; padding-bottom:6vh; border-bottom:1px solid var(--ink); }
+    h1,h2 { font-family:Georgia, serif; font-weight:400; }
+    h1 { margin:0; font-size:clamp(64px, 10vw, 126px); line-height:.76; letter-spacing:-.05em; }
+    .meta { align-self:end; font-size:14px; }
+    .meta p { margin:6px 0; }
+    .purpose { max-width:720px; margin:8vh 0; font-family:Georgia, serif; font-size:clamp(21px, 3vw, 31px); }
+    h2 { margin:0 0 30px; font-size:38px; }
+    ol { margin:0; padding:0; list-style:none; counter-reset:task; }
+    li { counter-increment:task; display:grid; grid-template-columns:70px 1fr; gap:20px; padding:28px 0; border-top:1px solid rgba(10,40,64,.32); font-family:Georgia, serif; font-size:19px; }
+    li::before { content:counter(task, decimal-leading-zero); color:var(--rust); font-family:Arial, sans-serif; font-size:13px; }
+    a { color:inherit; text-underline-offset:4px; }
+    .note { margin-top:7vh; padding:18px 20px; background:rgba(110,200,196,.18); font-size:13px; }
+    @media(max-width:650px){ header{display:block} .meta{margin-top:45px} li{grid-template-columns:44px 1fr} }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Drift<br>Atlas</h1>
+      <div class="meta">
+        <p><strong>Author</strong> - Mere Cui</p>
+        <p><strong>Email</strong> - cuis308@newschool.edu</p>
+        <p><strong>Website</strong> - <a href="https://mere0125.github.io/drift-atlas/">mere0125.github.io/drift-atlas</a></p>
+      </div>
+    </header>
+
+    <p class="purpose">Drift Atlas is a place-based way to explore historical NOAA surface-drifter observations. It lets a visitor find instruments that passed near a chosen point in 2024, then follow one visible regional record before and after that encounter.</p>
+
+    <section aria-labelledby="tasks-title">
+      <h2 id="tasks-title">Four things to try</h2>
+      <ol>
+        <li>Before using the controls, explain in your own words whether this website is showing live ocean movement, a forecast, or historical observations.</li>
+        <li>Choose a location, month, and search radius that are different from the opening example. How many drifters does the archive return?</li>
+        <li>Open one result and follow its 2024 record. When did it come near your selected place, and what general direction did it travel afterward?</li>
+        <li>Find one warning about the limits of the data. What should you avoid concluding from a single route or an empty search?</li>
+      </ol>
+    </section>
+
+    <p class="note">Please note where you hesitate, what you expected to happen, and any label that did not make sense. The test is about the project, not the tester.</p>
+  </main>
+</body>
+</html>

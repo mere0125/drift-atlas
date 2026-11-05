@@ -42,6 +42,7 @@
   const state = {
     ...DEFAULT_STATE,
     data: [],
+    byId: new Map(),
     byMonth: Array.from({ length: 12 }, () => []),
     byMonthId: Array.from({ length: 12 }, () => new Map()),
     land: null,
@@ -51,6 +52,9 @@
     hoveredId: null,
     projection: null,
     dirty: false,
+    journeyId: null,
+    journeyIndex: 0,
+    journeyTimer: null,
   };
 
   const dom = {
@@ -70,6 +74,20 @@
     routeList: document.querySelector("#route-list"),
     routeDetail: document.querySelector("#route-detail"),
     routeIndexTitle: document.querySelector("#route-index-title"),
+    journey: document.querySelector("#journey"),
+    journeyEmpty: document.querySelector("#journey-empty"),
+    journeyPlayer: document.querySelector("#journey-player"),
+    journeySvg: d3.select("#journey-map"),
+    journeyIntro: document.querySelector("#journey-intro"),
+    journeyPlay: document.querySelector("#journey-play"),
+    journeyRange: document.querySelector("#journey-range"),
+    journeyStage: document.querySelector("#journey-stage-label"),
+    journeyDate: document.querySelector("#journey-date"),
+    journeyId: document.querySelector("#journey-id"),
+    journeyPosition: document.querySelector("#journey-position"),
+    journeyDistance: document.querySelector("#journey-distance"),
+    journeyDrogue: document.querySelector("#journey-drogue"),
+    journeyBoundaryNote: document.querySelector("#journey-boundary-note"),
   };
 
   function cleanNumber(value) {
@@ -586,7 +604,142 @@
         <div><dt>Mean recorded SST</dt><dd>${temperature}</dd></div>
       </dl>
       <p class="detail-note">The visible route is split into ${segmentCount} ${segmentCount === 1 ? "segment" : "segments"} wherever this regional extract has a gap longer than 12 hours.</p>
+      <button class="follow-button" type="button" data-follow-id="${match.id}">Follow this drifter through 2024</button>
     `;
+    dom.routeDetail.querySelector("[data-follow-id]")?.addEventListener("click", () => openJourney(match.id));
+  }
+
+  function stopJourney() {
+    if (state.journeyTimer) window.clearInterval(state.journeyTimer);
+    state.journeyTimer = null;
+    dom.journeyPlay.textContent = "Play route";
+    dom.journeyPlay.setAttribute("aria-pressed", "false");
+  }
+
+  function journeyStage(row, encounter) {
+    const distance = haversineKm(state.center, [row.longitude, row.latitude]);
+    if (distance <= state.radiusKm) return "Near your selected place";
+    return row.time < encounter.time ? "Before the encounter" : "After the encounter";
+  }
+
+  function updateJourney(index) {
+    const rows = state.byId.get(state.journeyId) || [];
+    const match = state.matches.find((item) => item.id === state.journeyId);
+    if (!rows.length || !match) return;
+
+    state.journeyIndex = Math.max(0, Math.min(rows.length - 1, Number(index)));
+    dom.journeyRange.value = String(state.journeyIndex);
+    const row = rows[state.journeyIndex];
+    const distance = haversineKm(state.center, [row.longitude, row.latitude]);
+    const status = drogueStatus(row);
+
+    dom.journeyStage.textContent = journeyStage(row, match.closestRow);
+    dom.journeyDate.textContent = formatUtc(row.time, true);
+    dom.journeyPosition.textContent = formatCoordinate([row.longitude, row.latitude]);
+    dom.journeyDistance.textContent = `${distance.toFixed(0)} km`;
+    dom.journeyDrogue.textContent = status.label.replace("Drogue ", "");
+
+    const projection = dom.journeySvg.node().__projection;
+    if (!projection) return;
+    const [x, y] = projection([row.longitude, row.latitude]);
+    dom.journeySvg.select(".journey-current")
+      .attr("cx", x)
+      .attr("cy", y);
+
+    const travelledRows = rows.slice(0, state.journeyIndex + 1);
+    const line = d3.line()
+      .x((point) => projection([point.longitude, point.latitude])[0])
+      .y((point) => projection([point.longitude, point.latitude])[1])
+      .curve(d3.curveCatmullRom.alpha(0.35));
+    const travelledLayer = dom.journeySvg.select(".journey-travelled");
+    travelledLayer.selectAll("path")
+      .data(splitAtGaps(travelledRows).filter((segment) => segment.length > 1))
+      .join("path")
+      .attr("d", line);
+  }
+
+  function renderJourney() {
+    const rows = state.byId.get(state.journeyId) || [];
+    const match = state.matches.find((item) => item.id === state.journeyId);
+    if (!rows.length || !match) return;
+
+    const width = Math.max(620, Math.round(dom.journeySvg.node().getBoundingClientRect().width || 1100));
+    const height = window.innerWidth <= 760 ? 520 : 680;
+    const projection = projectionFor(width, height, window.innerWidth <= 760 ? 28 : 42);
+    dom.journeySvg.node().__projection = projection;
+    const geoPath = d3.geoPath(projection);
+    const line = d3.line()
+      .x((row) => projection([row.longitude, row.latitude])[0])
+      .y((row) => projection([row.longitude, row.latitude])[1])
+      .curve(d3.curveCatmullRom.alpha(0.35));
+
+    dom.journeySvg.attr("viewBox", `0 0 ${width} ${height}`).selectAll("*").remove();
+    dom.journeySvg.append("rect").attr("class", "journey-ocean").attr("width", width).attr("height", height);
+    dom.journeySvg.append("path")
+      .datum(d3.geoGraticule().extent([[REGION.west, REGION.south], [REGION.east, REGION.north]]).step([5, 5])())
+      .attr("class", "journey-graticule")
+      .attr("d", geoPath);
+    dom.journeySvg.append("path").datum(state.land).attr("class", "journey-land").attr("d", geoPath);
+
+    const fullLayer = dom.journeySvg.append("g").attr("class", "journey-full-route");
+    fullLayer.selectAll("path")
+      .data(splitAtGaps(rows).filter((segment) => segment.length > 1))
+      .join("path")
+      .attr("d", line);
+    dom.journeySvg.append("g").attr("class", "journey-travelled");
+
+    dom.journeySvg.append("path")
+      .datum(d3.geoCircle().center(state.center).radius(state.radiusKm / 111.32).precision(2)())
+      .attr("class", "journey-search-area")
+      .attr("d", geoPath);
+    const encounterXY = projection([match.closestRow.longitude, match.closestRow.latitude]);
+    dom.journeySvg.append("circle")
+      .attr("class", "journey-encounter")
+      .attr("cx", encounterXY[0])
+      .attr("cy", encounterXY[1])
+      .attr("r", 7);
+    dom.journeySvg.append("circle").attr("class", "journey-current").attr("r", 6);
+
+    dom.journeyRange.max = String(rows.length - 1);
+    dom.journeyRange.value = "0";
+    dom.journeyId.textContent = `Drifter ${shortId(state.journeyId)} - NOAA ID ${state.journeyId}`;
+    dom.journeyIntro.textContent = `This is the portion of drifter ${shortId(state.journeyId)} preserved inside the 2024 western North Atlantic extract.`;
+    dom.journeyBoundaryNote.textContent = `The record shown runs from ${formatUtc(rows[0].time)} to ${formatUtc(rows[rows.length - 1].time)}. Its beginning or end may mark the regional boundary or a data gap, not the physical start or stop of the instrument.`;
+    updateJourney(0);
+  }
+
+  function openJourney(id) {
+    stopJourney();
+    state.journeyId = id;
+    state.journeyIndex = 0;
+    dom.journeyEmpty.hidden = true;
+    dom.journeyPlayer.hidden = false;
+    renderJourney();
+    dom.journey.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  }
+
+  function bindJourney() {
+    dom.journeyRange.addEventListener("input", () => {
+      stopJourney();
+      updateJourney(dom.journeyRange.value);
+    });
+    dom.journeyPlay.addEventListener("click", () => {
+      if (state.journeyTimer) {
+        stopJourney();
+        return;
+      }
+      const rows = state.byId.get(state.journeyId) || [];
+      if (!rows.length) return;
+      if (state.journeyIndex >= rows.length - 1) updateJourney(0);
+      dom.journeyPlay.textContent = "Pause";
+      dom.journeyPlay.setAttribute("aria-pressed", "true");
+      const step = Math.max(1, Math.ceil(rows.length / 240));
+      state.journeyTimer = window.setInterval(() => {
+        const next = Math.min(rows.length - 1, state.journeyIndex + step);
+        updateJourney(next);
+        if (next >= rows.length - 1) stopJourney();
+      }, 55);
+    });
   }
 
   function selectRoute(id) {
@@ -605,7 +758,14 @@
   }
 
   function runSearch({ preserveSelection = false } = {}) {
-    if (!preserveSelection) state.selectedId = null;
+    if (!preserveSelection) {
+      state.selectedId = null;
+      stopJourney();
+      state.journeyId = null;
+      dom.journeyPlayer.hidden = true;
+      dom.journeyEmpty.hidden = false;
+      dom.journeyIntro.textContent = "Choose a route above, then follow its visible 2024 record before and after it came near your selected place.";
+    }
     state.matches = findMatches(state.month, state.center, state.radiusKm);
     state.visibleMatches = state.matches.slice(0, MAX_VISIBLE_TRACKS);
     state.dirty = false;
@@ -660,6 +820,7 @@
 
   async function load() {
     bindControls();
+    bindJourney();
 
     try {
       const [csvText, topology] = await Promise.all([
@@ -700,6 +861,8 @@
         ));
 
       for (const row of state.data) {
+        if (!state.byId.has(row.id)) state.byId.set(row.id, []);
+        state.byId.get(row.id).push(row);
         state.byMonth[row.month].push(row);
         if (!state.byMonthId[row.month].has(row.id)) state.byMonthId[row.month].set(row.id, []);
         state.byMonthId[row.month].get(row.id).push(row);
@@ -708,6 +871,7 @@
       for (const monthMap of state.byMonthId) {
         for (const monthRows of monthMap.values()) monthRows.sort((a, b) => a.time - b.time);
       }
+      for (const rowsForId of state.byId.values()) rowsForId.sort((a, b) => a.time - b.time);
 
       state.land = topojson.feature(topology, topology.objects.land);
       renderHero();
@@ -720,6 +884,7 @@
         resizeTimer = window.setTimeout(() => {
           renderHero();
           renderMap();
+          if (state.journeyId) renderJourney();
         }, 120);
       });
       observer.observe(dom.mapFrame);

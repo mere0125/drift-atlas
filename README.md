@@ -13,8 +13,20 @@ The working prototype includes:
 - an adjustable search radius
 - real spatial filtering of NOAA observations
 - interactive monthly routes and individual drifter details
+- a full-record follow mode with play/pause and a draggable timeline
+- explicit before, near, and after stages around the selected place
 - explicit drogue status and archive limitations
 - route breaks wherever the regional extract has a gap longer than 12 hours
+
+The project uses 2024 because it is the latest complete calendar year in the
+NOAA delayed-mode quality-controlled source used by this prototype. The source
+metadata currently reports coverage through June 18, 2025, so the interface is
+explicitly historical rather than real time.
+
+## Peer user test
+
+The public [peer-test guide](peer-test.html) includes the project URL, author
+contact, a two-sentence purpose statement, and four audience tasks.
 
 ## Open the website locally
 
@@ -32,7 +44,7 @@ Read [DATA_DOCUMENT.md](DATA_DOCUMENT.md) for the complete data sources, dimensi
 
 ## Repository contents
 
-- `index.html`, `styles.css`, `app.js` - the published interactive site
+- `index.html`, `styles.css`, `app.js`, `ocean.js` - the published interactive site
 - `assets/` - credited NOAA photographs used by the narrative
 - `vendor/` - local copies of D3 and topojson-client
 - `data/` - the downloaded NOAA working extract, coastline data, and exact download record
