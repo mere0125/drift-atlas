@@ -75,4 +75,6 @@
     tag.textContent = "Surface drifter";
     window.dispatchEvent(new CustomEvent("drift:home"));
   });
+  // The sea chart is the main workspace; the waterline remains one click away.
+  openSearch();
 })();

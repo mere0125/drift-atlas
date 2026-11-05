@@ -338,6 +338,9 @@ try {
     setView("surface");
   });
   if (window.driftAtlasSnapshot) atlas.setResults(window.driftAtlasSnapshot);
+  if(document.body.classList.contains("is-searching")){
+    searching=true;atlas.setSearching(true);setView("above");
+  }
   canvas.addEventListener("pointerdown", (event) => {
     if (view !== "above") return;
     touches.set(event.pointerId, { x: event.clientX, y: event.clientY });

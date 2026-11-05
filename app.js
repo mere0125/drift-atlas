@@ -1020,6 +1020,7 @@
   }
 
   function runSearch({ preserveSelection = false } = {}) {
+    if (!state.land) return;
     if (!preserveSelection) {
       state.selectedId = null;
       stopJourney();
