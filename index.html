@@ -19,10 +19,10 @@
     ></canvas>
     <div class="scene-shade" aria-hidden="true"></div>
     <div id="ocean-tooltip" class="ocean-tooltip" role="tooltip" hidden></div>
+    <p id="scene-notice" class="scene-notice" role="status" hidden></p>
     <p id="scene-help" class="scene-help" hidden>
-      Click water to choose a place. Click a bright route to open it.<br />Faint
-      routes are other records from the same month.<br />Drag to turn the chart.
-      Scroll to look closer.
+      Choose a place on the water.<br />Drag to look around. Scroll to move
+      closer.
     </p>
     <header class="masthead">
       <button id="home-button" class="wordmark" type="button">
@@ -73,6 +73,7 @@
             <p id="journey-id"></p>
             <h2 id="journey-title">Following a drifter</h2>
             <p id="journey-intro"></p>
+            <p id="trail-scope">Waterline trail: previous 14 days.</p>
             <button id="change-drifter" type="button">
               Choose another drifter ↗
             </button>
@@ -175,6 +176,9 @@
       >
         ↺
       </button>
+      <button id="hide-interface" type="button" aria-pressed="false">
+        Hide controls
+      </button>
     </div>
     <footer class="scene-footer">
       <p>Ocean scene is illustrative. Positions are NOAA records.</p>
@@ -190,6 +194,29 @@
       hidden
     >
       <section id="explorer">
+        <div class="dock-bar">
+          <p id="result-summary" class="result-summary" aria-live="polite">
+            Loading NOAA records…
+          </p>
+          <div class="dock-actions">
+            <button
+              id="toggle-filters"
+              type="button"
+              aria-expanded="false"
+              aria-controls="search-form"
+            >
+              Search settings
+            </button>
+            <button
+              id="toggle-results"
+              type="button"
+              aria-expanded="false"
+              aria-controls="route-index"
+            >
+              Drifters
+            </button>
+          </div>
+        </div>
         <div class="sheet-heading">
           <div>
             <p>The 2024 archive</p>
@@ -269,15 +296,24 @@
                 </div>
               </div>
             </details>
-            <p id="result-summary" class="result-summary" aria-live="polite">
-              Loading records…
-            </p>
             <p class="map-note">Tracks break at gaps longer than 12 hours.</p>
             <button id="example-button" class="reset-button" type="button">
               Reset to May - 36°N, 69°W
             </button>
           </div>
-          <aside class="route-index" aria-labelledby="route-index-title">
+          <aside
+            id="route-index"
+            class="route-index"
+            aria-labelledby="route-index-title"
+          >
+            <button
+              id="close-results"
+              class="close-results"
+              type="button"
+              aria-label="Close drifter list"
+            >
+              ×
+            </button>
             <h3 id="route-index-title">May routes</h3>
             <div id="route-list" class="route-list"></div>
             <section
@@ -318,6 +354,11 @@
           before and after that encounter.
         </p>
         <p>
+          Waterline view shows the previous 14 days of recorded track around the
+          selected date. Sea chart shows the full visible 2024 regional record.
+          Move the timeline to explore the rest of the route.
+        </p>
+        <p>
           On the sea chart, bright routes match your search. Faint lines show
           other drifters recorded in the same month, so you can see where
           observations are available.
@@ -343,9 +384,10 @@
           The animated sea is an illustrative setting, not a reconstruction of
           weather or waves. In follow mode the line and marker use real NOAA
           positions in a Mercator coordinate frame. The sea chart uses a real
-          Natural Earth coastline and labelled coordinates. Land is raised for
-          clarity; its height does not represent measured terrain. The small
-          float is a simplified representation of a drifter.
+          Natural Earth coastline and labelled coordinates. The coast is drawn
+          as a translucent chart annotation, with no measured terrain or depth
+          encoded in it. The small float is a simplified representation of a
+          drifter.
         </p>
         <p>
           One instrument cannot represent every surrounding current. An empty

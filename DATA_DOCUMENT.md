@@ -40,6 +40,13 @@ The exact ERDDAP request, file hashes, and download notes are recorded in [`data
 
 This small file will draw land behind the drifter paths. It contains generalized global land polygons, not ocean observations. I downloaded and opened it successfully; it is 55,207 bytes.
 
+**Visual revision, November 5, 2026:** The live interface now uses the more
+detailed [world-atlas 2.0.2 land-50m.json](https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/land-50m.json),
+downloaded November 5, 2026 (545,534 bytes). Its coastline is rendered as a
+translucent cartographic annotation over the illustrative sea. It encodes no
+terrain height or water depth. The original 1:110m file and its analysis below
+remain in the repository as the earlier prototype reference.
+
 ## 2. Size and structure
 
 ### NOAA working extract

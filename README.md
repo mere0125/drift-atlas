@@ -27,11 +27,20 @@ The working prototype includes:
 The animated water and weather are illustrative. In follow mode, the drifter
 and its route use a local Mercator frame calculated from the actual record.
 The same geographic frame is used by the sea chart, the selected record and
-the flat-chart alternative. Land is raised by a constant decorative amount;
-it is not a terrain or bathymetry model. The sea chart can be rotated, zoomed
+the flat-chart alternative. The live scene uses the more detailed Natural
+Earth 1:50m coastline as a translucent annotation; it is not a terrain or
+bathymetry model. Settings and the route index open from a compact instrument
+rail. A quiet mode hides text and controls while leaving the scene visible.
+The sea chart can be rotated, zoomed
 with a wheel or pinch gesture, and reset with the view controls.
 Waterline and overhead views, pause/resume for the water, and the historical
-record timeline are separate controls. Playback is accelerated.
+record timeline are separate controls. The waterline camera can also be
+rotated and moved closer to the instrument. Playback is accelerated.
+
+Waterline view shows the previous 14 days of track, while Sea chart retains
+the full visible 2024 regional record. The selected track conforms visually
+to the illustrative waves without changing its geographic coordinates.
+Line subdivision is a rendering operation and does not create observations.
 
 The project uses 2024 because it is the latest complete calendar year in the
 NOAA delayed-mode quality-controlled source used by this prototype. The source

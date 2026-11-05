@@ -2,7 +2,7 @@
   "use strict";
 
   const DATA_URL = "data/noaa_gdp_6hour_western_north_atlantic_2024.csv";
-  const LAND_URL = "data/land-110m.json";
+  const LAND_URL = "data/land-50m.json";
   const REGION = {
     west: -75,
     east: -40,
@@ -1065,6 +1065,8 @@
   }
 
   function publishAtlas() {
+    document.querySelector("#toggle-results").textContent =
+      `${state.matches.length} ${state.matches.length === 1 ? "drifter" : "drifters"} ↗`;
     const contextRoutes = [...state.byMonthId[state.month].entries()].map(
       ([id, rows]) => ({ id, segments: splitAtGaps(rows) }),
     );

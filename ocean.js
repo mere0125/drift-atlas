@@ -20,9 +20,10 @@ try {
   );
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 0.64;
+  renderer.toneMappingExposure = 0.92;
 
   const scene = new THREE.Scene();
+  scene.fog = new THREE.FogExp2(0xcde6ec, 0.00048);
   const camera = new THREE.PerspectiveCamera(48, 1, 0.1, 18000);
   camera.position.set(0, 4, 24);
   const target = new THREE.Vector3(0, 1, -70);
@@ -36,7 +37,7 @@ try {
   sky.material.uniforms.mieDirectionalG.value = 0.83;
   const sun = new THREE.Vector3().setFromSphericalCoords(
     1,
-    THREE.MathUtils.degToRad(78),
+    THREE.MathUtils.degToRad(61),
     THREE.MathUtils.degToRad(151),
   );
   sky.material.uniforms.sunPosition.value.copy(sun);
@@ -65,17 +66,17 @@ try {
     .replace(
       "gl_FragColor = vec4( retColor, 1.0 );",
       `
-    vec3 clearSky = mix(vec3(0.76,0.73,0.66),vec3(0.12,0.34,0.59),pow(max(direction.y,0.0),0.46));
+    vec3 clearSky = mix(vec3(0.45,0.75,0.87),vec3(0.01,0.10,0.42),pow(max(direction.y,0.0),0.46));
     float sunGlow = pow(max(dot(direction,vSunDirection),0.0),18.0);
-    clearSky += vec3(0.32,0.15,0.025)*sunGlow;
+    clearSky += vec3(0.20,0.23,0.20)*sunGlow;
     retColor = mix(clearSky,retColor,sundisk*0.96);
     vec2 cp = direction.xz / max(direction.y + 0.23, 0.06) * 1.8;
     cp.x += cloudTime * 0.003;
     float cloud = fbmCloud(cp + vec2(9.4, 2.7));
     float detail = fbmCloud(cp * 3.0 + 4.0);
-    float coverage = smoothstep(0.58, 0.83, cloud + detail * 0.13);
+    float coverage = smoothstep(0.63, 0.87, cloud + detail * 0.13);
     coverage *= smoothstep(0.01, 0.2, direction.y) * 0.87;
-    vec3 cloudColor = mix(vec3(0.87,0.78,0.74), vec3(1.65,1.52,1.32), smoothstep(0.48,0.78,cloud));
+    vec3 cloudColor = mix(vec3(0.65,0.76,0.84), vec3(1.36,1.45,1.44), smoothstep(0.48,0.78,cloud));
     retColor = mix(retColor, cloudColor, coverage);
     gl_FragColor = vec4(retColor, 1.0);
   `,
@@ -116,24 +117,36 @@ try {
     textureHeight: mobile ? 256 : 512,
     waterNormals: normals,
     sunDirection: sun,
-    sunColor: 0xffe8cf,
-    waterColor: 0x087c83,
-    distortionScale: 3.4,
+    sunColor: 0xeafaff,
+    waterColor: 0x118f9a,
+    distortionScale: 2.7,
+    fog: true,
   });
   water.rotation.x = -Math.PI / 2;
-  water.material.uniforms.size.value = 3.4;
+  water.material.uniforms.size.value = 5.1;
   water.material.fragmentShader = water.material.fragmentShader
-    .replace("float rf0 = 0.3;", "float rf0 = 0.085;")
-    .replace("sunColor * diffuseLight * 0.3", "sunColor * diffuseLight * 0.07");
+    .replace("float rf0 = 0.3;", "float rf0 = 0.07;")
+    .replace(
+      "sunColor * diffuseLight * 0.3",
+      "sunColor * diffuseLight * 0.055",
+    );
 
   const waveGLSL = `
     vec3 seaPosition = position;
     vec2 seaXZ = vec2(position.x, -position.y);
-    seaPosition.z += sin(seaXZ.x*0.12+seaXZ.y*0.065+time*0.72)*0.42;
-    seaPosition.z += sin(seaXZ.x*-0.075+seaXZ.y*0.16+time*0.91)*0.25;
-    seaPosition.z += sin(seaXZ.x*0.27+seaXZ.y*0.19-time*1.2)*0.12;
+    float q1=seaXZ.x*0.15+seaXZ.y*0.06-time*0.8;
+    float q2=seaXZ.x*-0.09+seaXZ.y*0.17+time*1.1;
+    float q3=seaXZ.x*0.28+seaXZ.y*0.2-time*1.4;
+    vWaveHeight=sin(q1)*0.7+sin(q2)*0.38+(sin(q3)+sin(q3*2.0)*0.18)*0.16;
+    seaPosition.z+=vWaveHeight;
+    vWaveSlope=vec2(cos(q1)*0.105-cos(q2)*0.0342+(cos(q3)+cos(q3*2.0)*0.36)*0.0448,
+                    cos(q1)*0.042+cos(q2)*0.0646+(cos(q3)+cos(q3*2.0)*0.36)*0.032);
   `;
   water.material.vertexShader = water.material.vertexShader
+    .replace(
+      "uniform float time;",
+      "uniform float time;\nvarying float vWaveHeight;\nvarying vec2 vWaveSlope;",
+    )
     .replace(
       "mirrorCoord = modelMatrix * vec4( position, 1.0 );",
       `${waveGLSL}\n mirrorCoord = modelMatrix * vec4( seaPosition, 1.0 );`,
@@ -142,10 +155,27 @@ try {
       "modelViewMatrix * vec4( position, 1.0 )",
       "modelViewMatrix * vec4( seaPosition, 1.0 )",
     );
+  water.material.fragmentShader = water.material.fragmentShader
+    .replace(
+      "varying vec4 worldPosition;",
+      "varying vec4 worldPosition;\nvarying float vWaveHeight;\nvarying vec2 vWaveSlope;",
+    )
+    .replace(
+      "vec4 noise = getNoise( worldPosition.xz * size );",
+      "vec4 noise = getNoise( worldPosition.xz * size );\nvec4 capillary=getNoise(worldPosition.xz*size*3.1+vec2(time*0.4,0.0));",
+    )
+    .replace(
+      "normalize( noise.xzy * vec3( 1.5, 1.0, 1.5 ) )",
+      "normalize(noise.xzy*vec3(0.82,1.0,0.82)+capillary.xzy*vec3(0.16,0.0,0.16)+vec3(-vWaveSlope.x,0.0,-vWaveSlope.y)*1.1)",
+    )
+    .replace(
+      "vec3 outgoingLight = albedo;",
+      "float crest=smoothstep(0.72,1.18,vWaveHeight)*smoothstep(0.12,0.72,noise.y);\nvec3 outgoingLight=mix(albedo,vec3(0.48,0.75,0.76),crest*0.06);",
+    );
   scene.add(water);
 
   scene.add(new THREE.HemisphereLight(0xcde9f1, 0x123d45, 2.3));
-  const sunlight = new THREE.DirectionalLight(0xffddad, 3.8);
+  const sunlight = new THREE.DirectionalLight(0xe6f7ff, 3.8);
   sunlight.position.copy(sun).multiplyScalar(100);
   scene.add(sunlight);
 
@@ -230,13 +260,21 @@ try {
   scene.add(halo);
 
   const pathGroup = new THREE.Group();
+  const trackTime = { value: 0 };
+  const recordedTime = { value: 0 },
+    surfaceTrail = { value: 1 };
+  const yearStart = Date.UTC(2024, 0, 1) / 1000;
   scene.add(pathGroup);
   const atlas = createAtlas({ scene, camera, canvas });
   let searching = false,
     atlasYaw = 0,
-    atlasPitch = mobile ? 1.36 : 0.94,
+    atlasPitch = mobile ? 1.36 : 0.78,
     atlasZoom = 1;
   let drag = null;
+  let surfaceOrbit = false,
+    surfaceYaw = 0,
+    surfacePitch = 0.12,
+    surfaceDistance = 24;
   const touches = new Map();
   let pinchDistance = null;
   let rows = [],
@@ -255,9 +293,11 @@ try {
 
   function oceanHeight(x, z, t) {
     return (
-      Math.sin(x * 0.12 + z * 0.065 + t * 0.72) * 0.42 +
-      Math.sin(x * -0.075 + z * 0.16 + t * 0.91) * 0.25 +
-      Math.sin(x * 0.27 + z * 0.19 - t * 1.2) * 0.12
+      Math.sin(x * 0.15 + z * 0.06 - t * 0.8) * 0.7 +
+      Math.sin(x * -0.09 + z * 0.17 + t * 1.1) * 0.38 +
+      (Math.sin(x * 0.28 + z * 0.2 - t * 1.4) +
+        Math.sin((x * 0.28 + z * 0.2 - t * 1.4) * 2) * 0.18) *
+        0.16
     );
   }
 
@@ -274,19 +314,76 @@ try {
     const previousPoint = points[selectedIndex]?.clone();
     const newRoute = routeId !== detail.id;
     if (newRoute) {
+      surfaceOrbit = false;
       routeId = detail.id;
       rows = detail.rows;
-      points = rows.map((row) => geoToWorld(row.longitude, row.latitude, 2.1));
+      points = rows.map((row) => {
+        const point = geoToWorld(row.longitude, row.latitude, 2.1);
+        point.recordedTime = row.time.getTime() / 1000 - yearStart;
+        return point;
+      });
       disposePaths();
       let segment = [];
       function addSegment() {
         if (segment.length > 1) {
-          const geometry = new THREE.BufferGeometry().setFromPoints(segment);
+          const surfacePoints = [segment[0]];
+          const observationTimes = [segment[0].recordedTime];
+          for (let i = 1; i < segment.length; i++) {
+            const a = segment[i - 1],
+              b = segment[i],
+              steps = Math.max(1, Math.ceil(a.distanceTo(b) / 0.8));
+            for (let j = 1; j <= steps; j++) {
+              surfacePoints.push(a.clone().lerp(b, j / steps));
+              observationTimes.push(
+                a.recordedTime +
+                  ((b.recordedTime - a.recordedTime) * j) / steps,
+              );
+            }
+          }
+          const geometry = new THREE.BufferGeometry().setFromPoints(
+            surfacePoints,
+          );
+          geometry.setAttribute(
+            "recordedTime",
+            new THREE.Float32BufferAttribute(observationTimes, 1),
+          );
           const material = new THREE.LineBasicMaterial({
             color: 0xffe2a6,
             transparent: true,
             opacity: 0.94,
           });
+          material.onBeforeCompile = (shader) => {
+            shader.uniforms.trackTime = trackTime;
+            shader.uniforms.activeRecordedTime = recordedTime;
+            shader.uniforms.surfaceTrail = surfaceTrail;
+            shader.vertexShader = shader.vertexShader
+              .replace(
+                "#include <common>",
+                "#include <common>\nuniform float trackTime;\nattribute float recordedTime;\nvarying float vRecordedTime;",
+              )
+              .replace(
+                "#include <begin_vertex>",
+                `#include <begin_vertex>
+              vRecordedTime=recordedTime;
+              float q1=position.x*.15+position.z*.06-trackTime*.8;
+              float q2=position.x*-.09+position.z*.17+trackTime*1.1;
+              float q3=position.x*.28+position.z*.2-trackTime*1.4;
+              transformed.y=sin(q1)*.7+sin(q2)*.38+(sin(q3)+sin(q3*2.)*.18)*.16+.14;`,
+              );
+            shader.fragmentShader = shader.fragmentShader
+              .replace(
+                "void main() {",
+                `uniform float activeRecordedTime;
+              uniform float surfaceTrail;
+              varying float vRecordedTime;
+              void main() {
+                if(surfaceTrail>0.5&&(vRecordedTime>activeRecordedTime||vRecordedTime<activeRecordedTime-1209600.0))discard;`,
+              )
+              .replace(
+                "#include <color_fragment>",
+                "#include <color_fragment>\nif(vRecordedTime>activeRecordedTime)diffuseColor.a*=0.18;",
+              );
+          };
           pathGroup.add(new THREE.Line(geometry, material));
         }
         segment = [];
@@ -298,6 +395,7 @@ try {
       addSegment();
     }
     selectedIndex = detail.index;
+    recordedTime.value = points[selectedIndex]?.recordedTime || 0;
     following = true;
     if (newRoute && points.length && view === "surface") {
       const focus = points[selectedIndex] || points[0];
@@ -338,11 +436,12 @@ try {
     setView("surface");
   });
   if (window.driftAtlasSnapshot) atlas.setResults(window.driftAtlasSnapshot);
-  if(document.body.classList.contains("is-searching")){
-    searching=true;atlas.setSearching(true);setView("above");
+  if (document.body.classList.contains("is-searching")) {
+    searching = true;
+    atlas.setSearching(true);
+    setView("above");
   }
   canvas.addEventListener("pointerdown", (event) => {
-    if (view !== "above") return;
     touches.set(event.pointerId, { x: event.clientX, y: event.clientY });
     if (touches.size > 1) {
       drag = null;
@@ -350,6 +449,7 @@ try {
       return;
     }
     drag = { x: event.clientX, y: event.clientY, moved: 0 };
+    canvas.style.cursor = "grabbing";
     canvas.setPointerCapture(event.pointerId);
   });
   canvas.addEventListener("pointermove", (event) => {
@@ -358,12 +458,22 @@ try {
     if (touches.size === 2) {
       const [a, b] = [...touches.values()];
       const distance = Math.hypot(a.x - b.x, a.y - b.y);
-      if (pinchDistance && distance > 0)
-        atlasZoom = THREE.MathUtils.clamp(
-          (atlasZoom * pinchDistance) / distance,
-          0.6,
-          2.2,
-        );
+      if (pinchDistance && distance > 0) {
+        if (view === "above")
+          atlasZoom = THREE.MathUtils.clamp(
+            (atlasZoom * pinchDistance) / distance,
+            0.6,
+            2.2,
+          );
+        else {
+          surfaceOrbit = true;
+          surfaceDistance = THREE.MathUtils.clamp(
+            (surfaceDistance * pinchDistance) / distance,
+            8,
+            70,
+          );
+        }
+      }
       pinchDistance = distance;
       return;
     }
@@ -372,8 +482,18 @@ try {
       dy = event.clientY - drag.y;
     drag.moved += Math.abs(dx) + Math.abs(dy);
     if (drag.moved > 5) {
-      atlasYaw -= dx * 0.004;
-      atlasPitch = THREE.MathUtils.clamp(atlasPitch + dy * 0.003, 0.55, 1.47);
+      if (view === "above") {
+        atlasYaw -= dx * 0.004;
+        atlasPitch = THREE.MathUtils.clamp(atlasPitch + dy * 0.003, 0.55, 1.47);
+      } else {
+        surfaceOrbit = true;
+        surfaceYaw -= dx * 0.005;
+        surfacePitch = THREE.MathUtils.clamp(
+          surfacePitch + dy * 0.003,
+          0.06,
+          0.78,
+        );
+      }
     }
     drag.x = event.clientX;
     drag.y = event.clientY;
@@ -381,6 +501,7 @@ try {
   canvas.addEventListener("pointerup", (event) => {
     if (drag && drag.moved < 6) atlas.pick(event);
     drag = null;
+    canvas.style.cursor = view === "above" ? "crosshair" : "grab";
     touches.delete(event.pointerId);
     pinchDistance = null;
     if (canvas.hasPointerCapture(event.pointerId))
@@ -399,19 +520,27 @@ try {
   });
   document.querySelector("#atlas-reset").addEventListener("click", () => {
     atlasYaw = 0;
-    atlasPitch = mobile ? 1.36 : 0.94;
+    atlasPitch = mobile ? 1.36 : 0.78;
     atlasZoom = 1;
   });
   canvas.addEventListener(
     "wheel",
     (event) => {
-      if (view !== "above") return;
       event.preventDefault();
-      atlasZoom = THREE.MathUtils.clamp(
-        atlasZoom * Math.exp(event.deltaY * 0.001),
-        0.6,
-        2.2,
-      );
+      if (view === "above")
+        atlasZoom = THREE.MathUtils.clamp(
+          atlasZoom * Math.exp(event.deltaY * 0.001),
+          0.6,
+          2.2,
+        );
+      else {
+        surfaceOrbit = true;
+        surfaceDistance = THREE.MathUtils.clamp(
+          surfaceDistance * Math.exp(event.deltaY * 0.001),
+          8,
+          70,
+        );
+      }
     },
     { passive: false },
   );
@@ -432,6 +561,12 @@ try {
   });
   function setView(next) {
     view = next;
+    surfaceTrail.value = view === "surface" ? 1 : 0;
+    document.querySelector("#trail-scope").textContent =
+      view === "surface"
+        ? "Waterline trail: previous 14 days."
+        : "Full visible 2024 regional record.";
+    canvas.style.cursor = view === "above" ? "crosshair" : "grab";
     document.body.classList.toggle("is-above", view === "above");
     document
       .querySelector("#view-surface")
@@ -482,6 +617,7 @@ try {
     if (!paused) elapsed += dt;
     const t = elapsed;
     water.material.uniforms.time.value = t * 0.7 + 2.4;
+    trackTime.value = t * 0.7 + 2.4;
     sky.material.uniforms.cloudTime.value = t;
     pathGroup.visible = following && !searching;
     atlas.showAbove(view === "above");
@@ -508,8 +644,8 @@ try {
     );
     halo.scale.setScalar(1.15 + Math.sin(t * 0.9) * 0.18);
     if (view === "above") {
-      const distance = (mobile ? 680 : 310) * atlasZoom;
-      wantedTarget.set(mobile ? 0 : -34, 0, mobile ? 75 : 0);
+      const distance = (mobile ? 680 : 285) * atlasZoom;
+      wantedTarget.set(0, 0, mobile ? 75 : 0);
       wantedPosition
         .copy(wantedTarget)
         .add(
@@ -517,6 +653,17 @@ try {
             Math.sin(atlasYaw) * Math.cos(atlasPitch) * distance,
             Math.sin(atlasPitch) * distance,
             Math.cos(atlasYaw) * Math.cos(atlasPitch) * distance,
+          ),
+        );
+    } else if (surfaceOrbit) {
+      wantedTarget.set(focus.x, 0.4, focus.z);
+      wantedPosition
+        .copy(wantedTarget)
+        .add(
+          new THREE.Vector3(
+            Math.sin(surfaceYaw) * Math.cos(surfacePitch) * surfaceDistance,
+            Math.sin(surfacePitch) * surfaceDistance + 1.4,
+            Math.cos(surfaceYaw) * Math.cos(surfacePitch) * surfaceDistance,
           ),
         );
     } else if (following) {

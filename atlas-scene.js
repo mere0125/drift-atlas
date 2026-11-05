@@ -171,17 +171,15 @@ export function createAtlas({ scene, camera, canvas }) {
             new THREE.Path(clipped.map(([x, y]) => new THREE.Vector2(x, y))),
           );
       }
-      const geometry = new THREE.ExtrudeGeometry(shape, {
-        depth: 1.6,
-        bevelEnabled: false,
-        curveSegments: 1,
-      });
+      const geometry = new THREE.ShapeGeometry(shape);
       geometry.rotateX(-Math.PI / 2);
-      geometry.translate(0, -0.3, 0);
-      const top = new THREE.MeshStandardMaterial({
-        color: 0xd9d7b9,
-        roughness: 0.98,
-        metalness: 0,
+      geometry.translate(0, 1.55, 0);
+      const top = new THREE.MeshBasicMaterial({
+        color: 0xbedace,
+        transparent: true,
+        opacity: 0.14,
+        depthWrite: false,
+        toneMapped: false,
       });
       top.onBeforeCompile = (shader) => {
         shader.vertexShader = shader.vertexShader
@@ -200,24 +198,45 @@ export function createAtlas({ scene, camera, canvas }) {
           )
           .replace(
             "#include <color_fragment>",
-            "#include <color_fragment>\nfloat hatch=smoothstep(0.93,0.98,fract((vPaperPosition.x+vPaperPosition.y)*0.34));\nfloat grain=fract(sin(dot(floor(vPaperPosition*25.0),vec2(127.1,311.7)))*43758.5453);\ndiffuseColor.rgb*=0.965+grain*0.035-hatch*0.045;",
+            `#include <color_fragment>
+            float hatch=smoothstep(0.94,0.99,fract((vPaperPosition.x+vPaperPosition.y)*0.65));
+            float edge=min(120.0-abs(vPaperPosition.x),${(mapHeight / 2).toFixed(6)}-abs(vPaperPosition.y));
+            diffuseColor.a*=smoothstep(0.0,12.0,edge)*(0.7+hatch*0.3);`,
           );
       };
-      const side = new THREE.MeshStandardMaterial({
-        color: 0x648e80,
-        roughness: 0.9,
-      });
-      landGroup.add(new THREE.Mesh(geometry, [top, side]));
-      const coast = outline.map(([x, y]) => new THREE.Vector3(x, 1.48, -y));
-      coast.push(coast[0]);
-      landGroup.add(line(coast, 0xece8c9, 0.72));
+      landGroup.add(new THREE.Mesh(geometry, top));
+      let coast = [];
+      const addCoast = () => {
+        if (coast.length > 1) {
+          const stroke = line(coast, 0xd9f0df, 0.58);
+          stroke.material.depthTest = false;
+          landGroup.add(stroke);
+        }
+        coast = [];
+      };
+      for (let i = 0; i < outline.length; i++) {
+        const a = outline[i],
+          b = outline[(i + 1) % outline.length];
+        const cutEdge =
+          (Math.abs(Math.abs(a[0]) - 120) < 0.0001 &&
+            Math.abs(a[0] - b[0]) < 0.0001) ||
+          (Math.abs(Math.abs(a[1]) - mapHeight / 2) < 0.0001 &&
+            Math.abs(a[1] - b[1]) < 0.0001);
+        if (cutEdge) {
+          addCoast();
+          continue;
+        }
+        if (!coast.length) coast.push(new THREE.Vector3(a[0], 1.7, -a[1]));
+        coast.push(new THREE.Vector3(b[0], 1.7, -b[1]));
+      }
+      addCoast();
     }
     for (let lon = -75; lon <= -40; lon += 5) {
       gridGroup.add(
         line(
           [geoToWorld(lon, 30, 0.8), geoToWorld(lon, 50, 0.8)],
           0xc4e9df,
-          0.22,
+          0.11,
         ),
       );
       const label = textSprite(`${Math.abs(lon)}°W`, 9);
@@ -229,21 +248,13 @@ export function createAtlas({ scene, camera, canvas }) {
         line(
           [geoToWorld(-75, lat, 0.8), geoToWorld(-40, lat, 0.8)],
           0xc4e9df,
-          0.22,
+          0.11,
         ),
       );
       const label = textSprite(`${lat}°N`, 9);
       label.position.copy(geoToWorld(-76.6, lat, 2));
       gridGroup.add(label);
     }
-    const border = [
-      [-75, 30],
-      [-75, 50],
-      [-40, 50],
-      [-40, 30],
-      [-75, 30],
-    ].map((p) => geoToWorld(...p, 0.85));
-    gridGroup.add(line(border, 0xdce9cd, 0.42));
     const oceanTitle = textSprite("North Atlantic", 42, "#d0e7df", true);
     oceanTitle.position.copy(geoToWorld(-49, 33, 1));
     oceanTitle.material.opacity = 0.42;
@@ -430,8 +441,11 @@ export function createAtlas({ scene, camera, canvas }) {
       ? raycaster.intersectObjects(pickable, false)[0]
       : null;
     const world = new THREE.Vector3();
-    raycaster.ray.intersectPlane(plane, world);
-    return { id: hit?.object.userData.id, coordinate: worldToGeo(world) };
+    const intersection = raycaster.ray.intersectPlane(plane, world);
+    return {
+      id: hit?.object.userData.id,
+      coordinate: intersection ? worldToGeo(world) : null,
+    };
   }
 
   canvas.addEventListener("pointermove", (event) => {
@@ -461,9 +475,24 @@ export function createAtlas({ scene, camera, canvas }) {
       window.dispatchEvent(new CustomEvent("drift:select", { detail: { id } }));
       return;
     }
+    if (!coordinate) return;
     const [lon, lat] = coordinate;
-    if (lon < -75 || lon > -40 || lat < 30 || lat > 50) return;
-    if (land && window.d3.geoContains(land, coordinate)) return;
+    if (lon < -75 || lon > -40 || lat < 30 || lat > 50) {
+      window.dispatchEvent(
+        new CustomEvent("drift:notice", {
+          detail: { text: "This archive covers 30–50°N and 75–40°W." },
+        }),
+      );
+      return;
+    }
+    if (land && window.d3.geoContains(land, coordinate)) {
+      window.dispatchEvent(
+        new CustomEvent("drift:notice", {
+          detail: { text: "Choose a point in the water." },
+        }),
+      );
+      return;
+    }
     window.dispatchEvent(
       new CustomEvent("drift:place", { detail: { center: coordinate } }),
     );

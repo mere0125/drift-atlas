@@ -51,7 +51,7 @@ Meteorological Laboratory pages and retain visible credit on the site.
 
 ## world-atlas
 
-The file `data/land-110m.json` is from world-atlas 2.0.2.
+The files `data/land-110m.json` and `data/land-50m.json` are from world-atlas 2.0.2.
 
 Copyright 2013-2019 Michael Bostock
 
