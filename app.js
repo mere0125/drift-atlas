@@ -17,26 +17,36 @@
     radiusKm: 180,
   };
   const MONTHS = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December",
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
   ];
   const COLORS = [
-    "#155eac",
-    "#d15c3f",
-    "#0a2840",
-    "#4ba7a4",
-    "#d7ad3f",
-    "#8d4f7b",
-    "#7f8d5f",
-    "#e47d5d",
-    "#5268a8",
-    "#16817e",
-    "#a04f34",
-    "#6b5b95",
-    "#9b7b2f",
-    "#2c698d",
-    "#ad657d",
-    "#425a3b",
+    "#efc58b",
+    "#ef987e",
+    "#a7ded1",
+    "#b9b2df",
+    "#d7d29b",
+    "#d6a1b4",
+    "#a6c2a1",
+    "#eeac86",
+    "#9bbfe0",
+    "#7fc9c4",
+    "#d79178",
+    "#b6a4cc",
+    "#c9b47d",
+    "#8ab9ce",
+    "#d6a6c0",
+    "#b4cb96",
   ];
 
   const state = {
@@ -117,9 +127,20 @@
   function formatUtc(date, withTime = false) {
     if (!date) return "Not available";
     const options = withTime
-      ? { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "UTC", hour12: false }
+      ? {
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          timeZone: "UTC",
+          hour12: false,
+        }
       : { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" };
-    return new Intl.DateTimeFormat("en-US", options).format(date).replace("24:00", "00:00") + (withTime ? " UTC" : "");
+    return (
+      new Intl.DateTimeFormat("en-US", options)
+        .format(date)
+        .replace("24:00", "00:00") + (withTime ? " UTC" : "")
+    );
   }
 
   function haversineKm(a, b) {
@@ -128,8 +149,11 @@
     const [lon2, lat2] = b;
     const deltaLat = (lat2 - lat1) * toRadians;
     const deltaLon = (lon2 - lon1) * toRadians;
-    const h = Math.sin(deltaLat / 2) ** 2
-      + Math.cos(lat1 * toRadians) * Math.cos(lat2 * toRadians) * Math.sin(deltaLon / 2) ** 2;
+    const h =
+      Math.sin(deltaLat / 2) ** 2 +
+      Math.cos(lat1 * toRadians) *
+        Math.cos(lat2 * toRadians) *
+        Math.sin(deltaLon / 2) ** 2;
     return 2 * 6371 * Math.asin(Math.sqrt(h));
   }
 
@@ -151,7 +175,10 @@
       return { label: "Drogue attached", className: "status-attached" };
     }
     if (!row.drogueLostDate || row.drogueLostDate.getUTCFullYear() <= 1971) {
-      return { label: "Drogue status uncertain", className: "status-uncertain" };
+      return {
+        label: "Drogue status uncertain",
+        className: "status-uncertain",
+      };
     }
     if (row.time >= row.drogueLostDate) {
       return { label: "Drogue already lost", className: "status-lost" };
@@ -172,11 +199,15 @@
     return [...nearby.entries()]
       .map(([id, observations]) => {
         const monthRows = state.byMonthId[month].get(id) || [];
-        const closest = observations.reduce((best, current) => (
-          current.distanceKm < best.distanceKm ? current : best
-        ));
-        const validSpeeds = monthRows.map((row) => row.speed).filter(Number.isFinite);
-        const validTemperatures = monthRows.map((row) => row.sst).filter(Number.isFinite);
+        const closest = observations.reduce((best, current) =>
+          current.distanceKm < best.distanceKm ? current : best,
+        );
+        const validSpeeds = monthRows
+          .map((row) => row.speed)
+          .filter(Number.isFinite);
+        const validTemperatures = monthRows
+          .map((row) => row.sst)
+          .filter(Number.isFinite);
         return {
           id,
           observations,
@@ -188,10 +219,16 @@
           first: monthRows[0]?.time || null,
           last: monthRows[monthRows.length - 1]?.time || null,
           averageSpeed: validSpeeds.length ? d3.mean(validSpeeds) : null,
-          averageTemperature: validTemperatures.length ? d3.mean(validTemperatures) : null,
+          averageTemperature: validTemperatures.length
+            ? d3.mean(validTemperatures)
+            : null,
         };
       })
-      .sort((a, b) => b.matchedCount - a.matchedCount || a.closestDistanceKm - b.closestDistanceKm);
+      .sort(
+        (a, b) =>
+          b.matchedCount - a.matchedCount ||
+          a.closestDistanceKm - b.closestDistanceKm,
+      );
   }
 
   function regionFeature() {
@@ -199,22 +236,33 @@
       type: "Feature",
       geometry: {
         type: "Polygon",
-        coordinates: [[
-          [REGION.west, REGION.south],
-          [REGION.west, REGION.north],
-          [REGION.east, REGION.north],
-          [REGION.east, REGION.south],
-          [REGION.west, REGION.south],
-        ]],
+        coordinates: [
+          [
+            [REGION.west, REGION.south],
+            [REGION.west, REGION.north],
+            [REGION.east, REGION.north],
+            [REGION.east, REGION.south],
+            [REGION.west, REGION.south],
+          ],
+        ],
       },
     };
   }
 
   function projectionFor(width, height, inset = 34) {
-    return d3.geoMercator().fitExtent(
-      [[inset, inset], [width - inset, height - inset]],
-      regionFeature(),
-    ).clipExtent([[inset, inset], [width - inset, height - inset]]);
+    return d3
+      .geoMercator()
+      .fitExtent(
+        [
+          [inset, inset],
+          [width - inset, height - inset],
+        ],
+        regionFeature(),
+      )
+      .clipExtent([
+        [inset, inset],
+        [width - inset, height - inset],
+      ]);
   }
 
   function renderHero() {
@@ -225,44 +273,67 @@
     const height = Math.max(520, Math.round(rect.height || 720));
     const projection = projectionFor(width, height, 24);
     const path = d3.geoPath(projection);
-    const heroMatches = findMatches(DEFAULT_STATE.month, DEFAULT_STATE.center, DEFAULT_STATE.radiusKm).slice(0, 7);
+    const heroMatches = findMatches(
+      DEFAULT_STATE.month,
+      DEFAULT_STATE.center,
+      DEFAULT_STATE.radiusKm,
+    ).slice(0, 7);
 
-    dom.heroSvg.attr("viewBox", `0 0 ${width} ${height}`).selectAll("*").remove();
-    dom.heroSvg.append("rect")
+    dom.heroSvg
+      .attr("viewBox", `0 0 ${width} ${height}`)
+      .selectAll("*")
+      .remove();
+    dom.heroSvg
+      .append("rect")
       .attr("class", "hero-ocean")
       .attr("width", width)
       .attr("height", height);
 
-    dom.heroSvg.append("path")
-      .datum(d3.geoGraticule().extent([[REGION.west, REGION.south], [REGION.east, REGION.north]])())
+    dom.heroSvg
+      .append("path")
+      .datum(
+        d3.geoGraticule().extent([
+          [REGION.west, REGION.south],
+          [REGION.east, REGION.north],
+        ])(),
+      )
       .attr("class", "hero-graticule")
       .attr("d", path);
 
-    dom.heroSvg.append("path")
+    dom.heroSvg
+      .append("path")
       .datum(state.land)
       .attr("class", "hero-land")
       .attr("d", path);
 
-    const line = d3.line()
+    const line = d3
+      .line()
       .x((row) => projection([row.longitude, row.latitude])[0])
       .y((row) => projection([row.longitude, row.latitude])[1])
       .curve(d3.curveCatmullRom.alpha(0.35));
 
     heroMatches.forEach((match, matchIndex) => {
-      match.segments.filter((segment) => segment.length > 1).forEach((segment) => {
-        dom.heroSvg.append("path")
-          .datum(segment)
-          .attr("class", "hero-track")
-          .attr("stroke", COLORS[matchIndex % COLORS.length])
-          .attr("d", line);
-      });
+      match.segments
+        .filter((segment) => segment.length > 1)
+        .forEach((segment) => {
+          dom.heroSvg
+            .append("path")
+            .datum(segment)
+            .attr("class", "hero-track")
+            .attr("stroke", COLORS[matchIndex % COLORS.length])
+            .attr("d", line);
+        });
     });
 
-    dom.heroSvg.append("path")
-      .datum(d3.geoCircle()
-        .center(DEFAULT_STATE.center)
-        .radius(DEFAULT_STATE.radiusKm / 111.32)
-        .precision(2)())
+    dom.heroSvg
+      .append("path")
+      .datum(
+        d3
+          .geoCircle()
+          .center(DEFAULT_STATE.center)
+          .radius(DEFAULT_STATE.radiusKm / 111.32)
+          .precision(2)(),
+      )
       .attr("class", "hero-search-area")
       .attr("d", path);
   }
@@ -271,7 +342,8 @@
     const longitudeTicks = [-70, -60, -50, -40];
     const latitudeTicks = [30, 35, 40, 45, 50];
 
-    svg.selectAll(".longitude-label")
+    svg
+      .selectAll(".longitude-label")
       .data(longitudeTicks)
       .join("text")
       .attr("class", "coordinate-label longitude-label")
@@ -280,7 +352,8 @@
       .attr("text-anchor", "middle")
       .text((longitude) => `${Math.abs(longitude)}°W`);
 
-    svg.selectAll(".latitude-label")
+    svg
+      .selectAll(".latitude-label")
       .data(latitudeTicks)
       .join("text")
       .attr("class", "coordinate-label latitude-label")
@@ -294,35 +367,53 @@
     const frameRect = dom.mapFrame.getBoundingClientRect();
     const width = Math.max(520, Math.round(frameRect.width));
     const height = 345;
-    const projection = projectionFor(width, height, window.innerWidth <= 760 ? 28 : 38);
+    const projection = projectionFor(
+      width,
+      height,
+      window.innerWidth <= 760 ? 28 : 38,
+    );
     const path = d3.geoPath(projection);
-    const line = d3.line()
+    const line = d3
+      .line()
       .x((row) => projection([row.longitude, row.latitude])[0])
       .y((row) => projection([row.longitude, row.latitude])[1])
       .curve(d3.curveLinear);
 
     state.projection = projection;
-    svg.attr("viewBox", `0 0 ${width} ${height}`).selectAll("g, rect.map-ocean, path.map-border").remove();
+    svg
+      .attr("viewBox", `0 0 ${width} ${height}`)
+      .selectAll("g, rect.map-ocean, path.map-border")
+      .remove();
 
-    svg.append("rect")
+    svg
+      .append("rect")
       .attr("class", "map-ocean")
       .attr("width", width)
       .attr("height", height);
 
     const base = svg.append("g").attr("class", "base-layer");
-    base.append("path")
-      .datum(d3.geoGraticule()
-        .extent([[REGION.west, REGION.south], [REGION.east, REGION.north]])
-        .step([5, 5])())
+    base
+      .append("path")
+      .datum(
+        d3
+          .geoGraticule()
+          .extent([
+            [REGION.west, REGION.south],
+            [REGION.east, REGION.north],
+          ])
+          .step([5, 5])(),
+      )
       .attr("class", "map-graticule")
       .attr("d", path);
 
-    base.append("path")
+    base
+      .append("path")
       .datum(state.land)
       .attr("class", "map-land")
       .attr("d", path);
 
-    base.append("path")
+    base
+      .append("path")
       .datum(regionFeature())
       .attr("class", "map-border")
       .attr("d", path);
@@ -330,54 +421,77 @@
     addCoordinateLabels(base, projection, width, height);
 
     const searchLayer = svg.append("g").attr("class", "search-layer");
-    searchLayer.append("path")
-      .datum(d3.geoCircle().center(state.center).radius(state.radiusKm / 111.32).precision(2)())
+    searchLayer
+      .append("path")
+      .datum(
+        d3
+          .geoCircle()
+          .center(state.center)
+          .radius(state.radiusKm / 111.32)
+          .precision(2)(),
+      )
       .attr("class", "search-area")
       .attr("d", path);
 
     const centerPoint = projection(state.center);
-    searchLayer.append("circle")
+    searchLayer
+      .append("circle")
       .attr("class", "search-center-outer")
       .attr("cx", centerPoint[0])
       .attr("cy", centerPoint[1])
       .attr("r", 7);
-    searchLayer.append("circle")
+    searchLayer
+      .append("circle")
       .attr("class", "search-center-inner")
       .attr("cx", centerPoint[0])
       .attr("cy", centerPoint[1])
       .attr("r", 2.7);
 
-    const routesLayer = svg.append("g")
+    const routesLayer = svg
+      .append("g")
       .attr("class", `routes-layer${state.selectedId ? " has-selection" : ""}`);
 
     state.visibleMatches.forEach((match, index) => {
       const color = COLORS[index % COLORS.length];
       match.color = color;
-      const group = routesLayer.append("g")
-        .attr("class", `route-group${state.selectedId === match.id ? " is-selected" : ""}`)
+      const group = routesLayer
+        .append("g")
+        .attr(
+          "class",
+          `route-group${state.selectedId === match.id ? " is-selected" : ""}`,
+        )
         .attr("data-id", match.id);
 
       match.segments.forEach((segment, segmentIndex) => {
         if (segment.length > 1) {
-          group.append("path")
+          group
+            .append("path")
             .datum(segment)
             .attr("class", "route-line")
             .attr("stroke", color)
             .attr("d", line);
 
-          const hit = group.append("path")
+          const hit = group
+            .append("path")
             .datum(segment)
             .attr("class", "route-hit")
             .attr("d", line)
             .attr("tabindex", segmentIndex === 0 ? 0 : -1)
             .attr("role", segmentIndex === 0 ? "button" : null)
-            .attr("aria-label", segmentIndex === 0
-              ? `Drifter ${match.id}, ${match.monthRows.length} positions in ${MONTHS[state.month]} 2024`
-              : null);
+            .attr(
+              "aria-label",
+              segmentIndex === 0
+                ? `Drifter ${match.id}, ${match.monthRows.length} positions in ${MONTHS[state.month]} 2024`
+                : null,
+            );
           bindRouteInteraction(hit, match);
         } else if (segment.length === 1) {
-          const [x, y] = projection([segment[0].longitude, segment[0].latitude]);
-          const point = group.append("circle")
+          const [x, y] = projection([
+            segment[0].longitude,
+            segment[0].latitude,
+          ]);
+          const point = group
+            .append("circle")
             .attr("class", "route-point")
             .attr("cx", x)
             .attr("cy", y)
@@ -385,7 +499,10 @@
             .attr("fill", color)
             .attr("tabindex", 0)
             .attr("role", "button")
-            .attr("aria-label", `Drifter ${match.id}, one visible position in ${MONTHS[state.month]} 2024`);
+            .attr(
+              "aria-label",
+              `Drifter ${match.id}, one visible position in ${MONTHS[state.month]} 2024`,
+            );
           bindRouteInteraction(point, match);
         }
       });
@@ -395,7 +512,8 @@
       if (firstPoint && lastPoint) {
         const firstXY = projection([firstPoint.longitude, firstPoint.latitude]);
         const lastXY = projection([lastPoint.longitude, lastPoint.latitude]);
-        group.append("circle")
+        group
+          .append("circle")
           .attr("cx", firstXY[0])
           .attr("cy", firstXY[1])
           .attr("r", 3.2)
@@ -403,7 +521,8 @@
           .attr("stroke", color)
           .attr("stroke-width", 1.5)
           .style("pointer-events", "none");
-        group.append("circle")
+        group
+          .append("circle")
           .attr("cx", lastXY[0])
           .attr("cy", lastXY[1])
           .attr("r", 3.2)
@@ -414,16 +533,19 @@
       }
     });
 
-    const legend = svg.append("g")
+    const legend = svg
+      .append("g")
       .attr("class", "map-legend")
       .attr("transform", `translate(${width - 205}, ${height - 22})`);
-    legend.append("line")
+    legend
+      .append("line")
       .attr("class", "map-legend-line")
       .attr("x1", 0)
       .attr("x2", 26)
       .attr("y1", 0)
       .attr("y2", 0);
-    legend.append("text")
+    legend
+      .append("text")
       .attr("x", 34)
       .attr("y", 4)
       .text("recorded monthly route");
@@ -435,9 +557,12 @@
       if (!coordinate) return;
       const [longitude, latitude] = coordinate;
       if (
-        longitude < REGION.west || longitude > REGION.east
-        || latitude < REGION.south || latitude > REGION.north
-      ) return;
+        longitude < REGION.west ||
+        longitude > REGION.east ||
+        latitude < REGION.south ||
+        latitude > REGION.north
+      )
+        return;
 
       state.center = [longitude, latitude];
       dom.locationOutput.value = formatCoordinate(state.center);
@@ -447,15 +572,33 @@
   }
 
   function renderSearchMarkerOnly() {
+    window.dispatchEvent(
+      new CustomEvent("drift:search-marker", {
+        detail: { center: [...state.center], radiusKm: state.radiusKm },
+      }),
+    );
     if (!state.projection) return;
     const path = d3.geoPath(state.projection);
     const layer = dom.mapSvg.select(".search-layer");
-    layer.select(".search-area")
-      .datum(d3.geoCircle().center(state.center).radius(state.radiusKm / 111.32).precision(2)())
+    layer
+      .select(".search-area")
+      .datum(
+        d3
+          .geoCircle()
+          .center(state.center)
+          .radius(state.radiusKm / 111.32)
+          .precision(2)(),
+      )
       .attr("d", path);
     const point = state.projection(state.center);
-    layer.select(".search-center-outer").attr("cx", point[0]).attr("cy", point[1]);
-    layer.select(".search-center-inner").attr("cx", point[0]).attr("cy", point[1]);
+    layer
+      .select(".search-center-outer")
+      .attr("cx", point[0])
+      .attr("cy", point[1]);
+    layer
+      .select(".search-center-inner")
+      .attr("cx", point[0])
+      .attr("cy", point[1]);
   }
 
   function bindRouteInteraction(selection, match) {
@@ -494,10 +637,12 @@
   }
 
   function updateRouteClasses() {
-    const layer = dom.mapSvg.select(".routes-layer")
+    const layer = dom.mapSvg
+      .select(".routes-layer")
       .classed("has-selection", Boolean(state.selectedId))
       .classed("has-hover", Boolean(state.hoveredId));
-    layer.selectAll(".route-group")
+    layer
+      .selectAll(".route-group")
       .classed("is-selected", function selected() {
         return this.dataset.id === state.selectedId;
       })
@@ -511,7 +656,10 @@
     let left;
     let top;
     if (fromKeyboard) {
-      const point = state.projection([match.closestRow.longitude, match.closestRow.latitude]);
+      const point = state.projection([
+        match.closestRow.longitude,
+        match.closestRow.latitude,
+      ]);
       left = point[0] + 14;
       top = point[1] - 34;
     } else {
@@ -537,13 +685,14 @@
   }
 
   function renderRouteIndex() {
-    dom.routeIndexTitle.textContent = `${MONTHS[state.month]} field notes`;
+    dom.routeIndexTitle.textContent = `${MONTHS[state.month]} routes`;
     dom.routeList.replaceChildren();
 
     if (!state.matches.length) {
       const message = document.createElement("p");
       message.className = "no-results";
-      message.textContent = "No drifter in this extract recorded the selected place and month. Try a wider radius, another month, or a new point on the map.";
+      message.textContent =
+        "No drifter in this extract recorded the selected place and month. Try a wider radius, another month, or a new point on the map.";
       dom.routeList.append(message);
       dom.routeDetail.innerHTML = `
         <p class="detail-prompt">This is a gap in the archive, not evidence that the water stood still.</p>
@@ -581,14 +730,17 @@
     }
 
     if (state.selectedId) renderRouteDetail(state.selectedId);
-    else dom.routeDetail.innerHTML = `<p class="detail-prompt">Select a route on the map or in the index.</p>`;
+    else
+      dom.routeDetail.innerHTML = `<p class="detail-prompt">Select a route on the map or in the index.</p>`;
   }
 
   function renderRouteDetail(id) {
     const match = state.visibleMatches.find((item) => item.id === id);
     if (!match) return;
     const status = drogueStatus(match.closestRow);
-    const speed = Number.isFinite(match.averageSpeed) ? `${match.averageSpeed.toFixed(2)} m/s` : "Not available";
+    const speed = Number.isFinite(match.averageSpeed)
+      ? `${match.averageSpeed.toFixed(2)} m/s`
+      : "Not available";
     const temperature = Number.isFinite(match.averageTemperature)
       ? `${match.averageTemperature.toFixed(1)} °C`
       : "Not available";
@@ -609,7 +761,9 @@
       <p class="detail-note">The visible route is split into ${segmentCount} ${segmentCount === 1 ? "segment" : "segments"} wherever this regional extract has a gap longer than 12 hours.</p>
       <button class="follow-button" type="button" data-follow-id="${match.id}">Follow this drifter through 2024</button>
     `;
-    dom.routeDetail.querySelector("[data-follow-id]")?.addEventListener("click", () => openJourney(match.id));
+    dom.routeDetail
+      .querySelector("[data-follow-id]")
+      ?.addEventListener("click", () => openJourney(match.id));
     dom.routeDetail.querySelector("[data-follow-id]").disabled = state.dirty;
   }
 
@@ -621,9 +775,14 @@
   }
 
   function journeyStage(row, encounter) {
-    const distance = haversineKm(state.journeyCenter, [row.longitude, row.latitude]);
+    const distance = haversineKm(state.journeyCenter, [
+      row.longitude,
+      row.latitude,
+    ]);
     if (distance <= state.journeyRadiusKm) return "Near your selected place";
-    return row.time < encounter.time ? "Before the encounter" : "After the encounter";
+    return row.time < encounter.time
+      ? "Before the encounter"
+      : "After the encounter";
   }
 
   function updateJourney(index) {
@@ -634,32 +793,40 @@
     state.journeyIndex = Math.max(0, Math.min(rows.length - 1, Number(index)));
     dom.journeyRange.value = String(state.journeyIndex);
     const row = rows[state.journeyIndex];
-    window.dispatchEvent(new CustomEvent("drift:position", {
-      detail: { id: state.journeyId, rows, index: state.journeyIndex },
-    }));
-    const distance = haversineKm(state.journeyCenter, [row.longitude, row.latitude]);
+    window.dispatchEvent(
+      new CustomEvent("drift:position", {
+        detail: { id: state.journeyId, rows, index: state.journeyIndex },
+      }),
+    );
+    const distance = haversineKm(state.journeyCenter, [
+      row.longitude,
+      row.latitude,
+    ]);
     const status = drogueStatus(row);
 
     dom.journeyStage.textContent = journeyStage(row, match.closestRow);
     dom.journeyDate.textContent = formatUtc(row.time, true);
-    dom.journeyPosition.textContent = formatCoordinate([row.longitude, row.latitude]);
+    dom.journeyPosition.textContent = formatCoordinate([
+      row.longitude,
+      row.latitude,
+    ]);
     dom.journeyDistance.textContent = `${distance.toFixed(0)} km`;
     dom.journeyDrogue.textContent = status.label.replace("Drogue ", "");
 
     const projection = dom.journeySvg.node().__projection;
     if (!projection) return;
     const [x, y] = projection([row.longitude, row.latitude]);
-    dom.journeySvg.select(".journey-current")
-      .attr("cx", x)
-      .attr("cy", y);
+    dom.journeySvg.select(".journey-current").attr("cx", x).attr("cy", y);
 
     const travelledRows = rows.slice(0, state.journeyIndex + 1);
-    const line = d3.line()
+    const line = d3
+      .line()
       .x((point) => projection([point.longitude, point.latitude])[0])
       .y((point) => projection([point.longitude, point.latitude])[1])
       .curve(d3.curveLinear);
     const travelledLayer = dom.journeySvg.select(".journey-travelled");
-    travelledLayer.selectAll("path")
+    travelledLayer
+      .selectAll("path")
       .data(splitAtGaps(travelledRows).filter((segment) => segment.length > 1))
       .join("path")
       .attr("d", line);
@@ -670,42 +837,87 @@
     const match = state.matches.find((item) => item.id === state.journeyId);
     if (!rows.length || !match) return;
 
-    const width = Math.max(620, Math.round(dom.journeySvg.node().getBoundingClientRect().width || 1100));
+    const width = Math.max(
+      620,
+      Math.round(dom.journeySvg.node().getBoundingClientRect().width || 1100),
+    );
     const height = 420;
-    const projection = projectionFor(width, height, window.innerWidth <= 760 ? 28 : 42);
+    const projection = projectionFor(
+      width,
+      height,
+      window.innerWidth <= 760 ? 28 : 42,
+    );
     dom.journeySvg.node().__projection = projection;
     const geoPath = d3.geoPath(projection);
-    const line = d3.line()
+    const line = d3
+      .line()
       .x((row) => projection([row.longitude, row.latitude])[0])
       .y((row) => projection([row.longitude, row.latitude])[1])
       .curve(d3.curveLinear);
 
-    dom.journeySvg.attr("viewBox", `0 0 ${width} ${height}`).selectAll("*").remove();
-    dom.journeySvg.append("rect").attr("class", "journey-ocean").attr("width", width).attr("height", height);
-    dom.journeySvg.append("path")
-      .datum(d3.geoGraticule().extent([[REGION.west, REGION.south], [REGION.east, REGION.north]]).step([5, 5])())
+    dom.journeySvg
+      .attr("viewBox", `0 0 ${width} ${height}`)
+      .selectAll("*")
+      .remove();
+    dom.journeySvg
+      .append("rect")
+      .attr("class", "journey-ocean")
+      .attr("width", width)
+      .attr("height", height);
+    dom.journeySvg
+      .append("path")
+      .datum(
+        d3
+          .geoGraticule()
+          .extent([
+            [REGION.west, REGION.south],
+            [REGION.east, REGION.north],
+          ])
+          .step([5, 5])(),
+      )
       .attr("class", "journey-graticule")
       .attr("d", geoPath);
-    dom.journeySvg.append("path").datum(state.land).attr("class", "journey-land").attr("d", geoPath);
+    dom.journeySvg
+      .append("path")
+      .datum(state.land)
+      .attr("class", "journey-land")
+      .attr("d", geoPath);
 
-    const fullLayer = dom.journeySvg.append("g").attr("class", "journey-full-route");
-    fullLayer.selectAll("path")
+    const fullLayer = dom.journeySvg
+      .append("g")
+      .attr("class", "journey-full-route");
+    fullLayer
+      .selectAll("path")
       .data(splitAtGaps(rows).filter((segment) => segment.length > 1))
       .join("path")
       .attr("d", line);
     dom.journeySvg.append("g").attr("class", "journey-travelled");
 
-    dom.journeySvg.append("path")
-      .datum(d3.geoCircle().center(state.journeyCenter).radius(state.journeyRadiusKm / 111.32).precision(2)())
+    dom.journeySvg
+      .append("path")
+      .datum(
+        d3
+          .geoCircle()
+          .center(state.journeyCenter)
+          .radius(state.journeyRadiusKm / 111.32)
+          .precision(2)(),
+      )
       .attr("class", "journey-search-area")
       .attr("d", geoPath);
-    const encounterXY = projection([match.closestRow.longitude, match.closestRow.latitude]);
-    dom.journeySvg.append("circle")
+    const encounterXY = projection([
+      match.closestRow.longitude,
+      match.closestRow.latitude,
+    ]);
+    dom.journeySvg
+      .append("circle")
       .attr("class", "journey-encounter")
       .attr("cx", encounterXY[0])
       .attr("cy", encounterXY[1])
       .attr("r", 7);
-    dom.journeySvg.append("circle").attr("class", "journey-current").attr("r", 5);
+    dom.journeySvg
+      .append("circle")
+      .attr("class", "journey-current")
+      .attr("r", 5);
     const labels = dom.journeySvg.append("g");
     addCoordinateLabels(labels, projection, width, height);
     labels.selectAll("text").classed("journey-coordinate", true);
@@ -713,11 +925,17 @@
     dom.journeyRange.max = String(rows.length - 1);
     dom.journeyRange.value = "0";
     dom.journeyId.textContent = `NOAA ${state.journeyId}`;
-    document.querySelector("#journey-title").textContent = `Drifter ${shortId(state.journeyId)}`;
+    document.querySelector("#journey-title").textContent =
+      `Drifter ${shortId(state.journeyId)}`;
     dom.journeyIntro.textContent = `Closest pass: ${formatUtc(match.closestRow.time)} - ${match.closestDistanceKm.toFixed(0)} km from your place.`;
-    dom.journeyBoundaryNote.textContent = "Visible 2024 regional record. Gaps and boundaries can shorten the track. Playback is accelerated; the water is illustrative.";
-    document.querySelector("#journey-first").textContent = formatUtc(rows[0].time);
-    document.querySelector("#journey-last").textContent = formatUtc(rows[rows.length - 1].time);
+    dom.journeyBoundaryNote.textContent =
+      "Visible 2024 regional record. Gaps and boundaries can shorten the track. Playback is accelerated; the water is illustrative.";
+    document.querySelector("#journey-first").textContent = formatUtc(
+      rows[0].time,
+    );
+    document.querySelector("#journey-last").textContent = formatUtc(
+      rows[rows.length - 1].time,
+    );
     updateJourney(state.journeyIndex);
   }
 
@@ -741,7 +959,11 @@
       const rows = state.byId.get(state.journeyId) || [];
       if (!match) return;
       stopJourney();
-      updateJourney(rows.findIndex((row) => row.time.getTime() === match.closestRow.time.getTime()));
+      updateJourney(
+        rows.findIndex(
+          (row) => row.time.getTime() === match.closestRow.time.getTime(),
+        ),
+      );
     });
     dom.journeyRange.addEventListener("input", () => {
       stopJourney();
@@ -769,19 +991,32 @@
   function selectRoute(id) {
     if (state.dirty) return;
     state.selectedId = state.selectedId === id ? null : id;
+    window.dispatchEvent(
+      new CustomEvent("drift:selection", { detail: { id: state.selectedId } }),
+    );
     updateRouteClasses();
     document.querySelectorAll(".route-result").forEach((button) => {
-      button.classList.toggle("is-selected", button.dataset.id === state.selectedId);
+      button.classList.toggle(
+        "is-selected",
+        button.dataset.id === state.selectedId,
+      );
     });
     if (state.selectedId) renderRouteDetail(state.selectedId);
-    else dom.routeDetail.innerHTML = `<p class="detail-prompt">Select a route on the map or in the index.</p>`;
+    else
+      dom.routeDetail.innerHTML = `<p class="detail-prompt">Select a route on the map or in the index.</p>`;
   }
 
   function markDirty() {
     state.dirty = true;
+    window.dispatchEvent(new CustomEvent("drift:pending"));
     dom.searchButton.classList.add("is-dirty");
-    dom.resultSummary.textContent = "Select Find drifters to update the results for these search conditions.";
-    document.querySelectorAll(".route-result, [data-follow-id]").forEach((button) => { button.disabled = true; });
+    dom.resultSummary.textContent =
+      "Select Find drifters to update the results for these search conditions.";
+    document
+      .querySelectorAll(".route-result, [data-follow-id]")
+      .forEach((button) => {
+        button.disabled = true;
+      });
   }
 
   function runSearch({ preserveSelection = false } = {}) {
@@ -792,7 +1027,8 @@
       dom.journeyPlayer.hidden = true;
       dom.journeyEmpty.hidden = false;
       window.dispatchEvent(new CustomEvent("drift:reset"));
-      dom.journeyIntro.textContent = "Choose a route above, then follow its visible 2024 record before and after it came near your selected place.";
+      dom.journeyIntro.textContent =
+        "Choose a route above, then follow its visible 2024 record before and after it came near your selected place.";
     }
     state.matches = findMatches(state.month, state.center, state.radiusKm);
     state.visibleMatches = state.matches.slice(0, MAX_VISIBLE_TRACKS);
@@ -801,13 +1037,15 @@
 
     renderMap();
     renderRouteIndex();
+    publishAtlas();
 
     const place = formatCoordinate(state.center);
     const month = MONTHS[state.month];
     if (state.matches.length) {
-      const visibleNote = state.matches.length > MAX_VISIBLE_TRACKS
-        ? ` ${MAX_VISIBLE_TRACKS} are drawn.`
-        : "";
+      const visibleNote =
+        state.matches.length > MAX_VISIBLE_TRACKS
+          ? ` ${MAX_VISIBLE_TRACKS} are drawn.`
+          : "";
       dom.resultSummary.textContent = `${state.matches.length} ${state.matches.length === 1 ? "drifter passed" : "drifters passed"} within ${state.radiusKm} km of ${place} in ${month} 2024.${visibleNote}`;
     } else {
       dom.resultSummary.textContent = `No drifter in this extract passed within ${state.radiusKm} km of ${place} in ${month} 2024.`;
@@ -825,6 +1063,23 @@
     runSearch();
   }
 
+  function publishAtlas() {
+    const contextRoutes = [...state.byMonthId[state.month].entries()].map(
+      ([id, rows]) => ({ id, segments: splitAtGaps(rows) }),
+    );
+    const detail = {
+      land: state.land,
+      matches: state.visibleMatches,
+      contextRoutes,
+      center: [...state.center],
+      radiusKm: state.radiusKm,
+      month: state.month,
+      count: state.matches.length,
+    };
+    window.driftAtlasSnapshot = detail;
+    window.dispatchEvent(new CustomEvent("drift:results", { detail }));
+  }
+
   function bindControls() {
     dom.form.addEventListener("submit", (event) => {
       event.preventDefault();
@@ -833,8 +1088,9 @@
 
     dom.month.addEventListener("change", () => {
       state.month = Number(dom.month.value);
-      markDirty();
+      runSearch();
     });
+    dom.radius.addEventListener("change", () => runSearch());
 
     dom.radius.addEventListener("input", () => {
       state.radiusKm = Number(dom.radius.value);
@@ -849,8 +1105,19 @@
       if (state.visibleMatches[0]) openJourney(state.visibleMatches[0].id);
     });
     window.addEventListener("drift:search-open", () => {
-      if (state.data.length) renderMap();
+      if (state.data.length) {
+        renderMap();
+        publishAtlas();
+      }
     });
+    window.addEventListener("drift:place", (event) => {
+      state.center = [...event.detail.center];
+      dom.locationOutput.value = formatCoordinate(state.center);
+      runSearch();
+    });
+    window.addEventListener("drift:select", (event) =>
+      selectRoute(event.detail.id),
+    );
     window.addEventListener("drift:home", stopJourney);
   }
 
@@ -882,39 +1149,47 @@
             longitude,
             ve,
             vn,
-            speed: Number.isFinite(ve) && Number.isFinite(vn) ? Math.hypot(ve, vn) : null,
+            speed:
+              Number.isFinite(ve) && Number.isFinite(vn)
+                ? Math.hypot(ve, vn)
+                : null,
             sst,
             drogueLostRaw: row.drogue_lost_date,
             drogueLostDate: parseDate(row.drogue_lost_date),
           };
         })
-        .filter((row) => (
-          row.time
-          && Number.isFinite(row.latitude)
-          && Number.isFinite(row.longitude)
-          && row.month >= 0
-          && row.month <= 11
-        ));
+        .filter(
+          (row) =>
+            row.time &&
+            Number.isFinite(row.latitude) &&
+            Number.isFinite(row.longitude) &&
+            row.month >= 0 &&
+            row.month <= 11,
+        );
 
       for (const row of state.data) {
         if (!state.byId.has(row.id)) state.byId.set(row.id, []);
         state.byId.get(row.id).push(row);
         state.byMonth[row.month].push(row);
-        if (!state.byMonthId[row.month].has(row.id)) state.byMonthId[row.month].set(row.id, []);
+        if (!state.byMonthId[row.month].has(row.id))
+          state.byMonthId[row.month].set(row.id, []);
         state.byMonthId[row.month].get(row.id).push(row);
       }
 
       for (const monthMap of state.byMonthId) {
-        for (const monthRows of monthMap.values()) monthRows.sort((a, b) => a.time - b.time);
+        for (const monthRows of monthMap.values())
+          monthRows.sort((a, b) => a.time - b.time);
       }
-      for (const rowsForId of state.byId.values()) rowsForId.sort((a, b) => a.time - b.time);
+      for (const rowsForId of state.byId.values())
+        rowsForId.sort((a, b) => a.time - b.time);
 
       state.land = topojson.feature(topology, topology.objects.land);
       renderHero();
       setDefaultSearch();
       dom.mapLoading.classList.add("is-hidden");
       document.querySelector("#quick-follow").disabled = false;
-      document.querySelector("#quick-follow").textContent = "Follow a drifter first";
+      document.querySelector("#quick-follow").textContent =
+        "Follow a drifter first";
 
       let resizeTimer;
       const observer = new ResizeObserver(() => {
@@ -928,7 +1203,8 @@
       observer.observe(dom.mapFrame);
     } catch (error) {
       console.error(error);
-      dom.mapLoading.textContent = "The local data could not be opened. Run this project through a local web server or GitHub Pages.";
+      dom.mapLoading.textContent =
+        "The local data could not be opened. Run this project through a local web server or GitHub Pages.";
       dom.resultSummary.textContent = "Data loading failed.";
     }
   }

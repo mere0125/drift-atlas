@@ -11,6 +11,9 @@ The working prototype includes:
 - a full-screen Three.js ocean with reflected sky, layered water normals, moving swells and a simplified floating instrument
 - a separate introduction and source document accessed through About this project
 - an archive search chart opened over the sea
+- direct location and route selection on a Three.js sea chart
+- actual Natural Earth coastlines, geographic graticules, rotation and zoom controls
+- faint same-month records as coverage context, with search matches highlighted
 - all twelve months of the 2024 regional extract
 - map-based location selection
 - an adjustable search radius
@@ -23,7 +26,10 @@ The working prototype includes:
 
 The animated water and weather are illustrative. In follow mode, the drifter
 and its route use a local Mercator frame calculated from the actual record.
-The accompanying geographic chart retains coastline and coordinate context.
+The same geographic frame is used by the sea chart, the selected record and
+the flat-chart alternative. Land is raised by a constant decorative amount;
+it is not a terrain or bathymetry model. The sea chart can be rotated, zoomed
+with a wheel or pinch gesture, and reset with the view controls.
 Waterline and overhead views, pause/resume for the water, and the historical
 record timeline are separate controls. Playback is accelerated.
 
@@ -34,8 +40,10 @@ explicitly historical rather than real time.
 
 ## Peer user test
 
-The public [peer-test guide](peer-test.html) includes the project URL, author
-contact, a two-sentence purpose statement, and four audience tasks.
+The public [peer-test guide](peer-test.html) includes the project URL, a short
+purpose statement and four audience tasks. Personal contact details are not
+displayed on that public page; the Courseworks PDF contains the author
+information requested for the class submission.
 
 ## Open the website locally
 
@@ -53,7 +61,7 @@ Read [DATA_DOCUMENT.md](DATA_DOCUMENT.md) for the complete data sources, dimensi
 
 ## Repository contents
 
-- `index.html`, `styles.css`, `app.js`, `ocean.js`, `experience.js` - the published interactive site
+- `index.html`, `styles.css`, `app.js`, `ocean.js`, `atlas-scene.js`, `experience.js` - the published interactive site
 - `assets/` - credited NOAA photographs used by the narrative
 - `vendor/` - local copies of D3 and topojson-client
 - `data/` - the downloaded NOAA working extract, coastline data, and exact download record

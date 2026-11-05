@@ -1181,3 +1181,329 @@ input[type="range"] {
 .is-above .record-heading button {
   color: #f3d5a3;
 }
+
+/* The chart is part of the sea; its controls sit at the margin. */
+#ocean-scene {
+  touch-action: none;
+}
+.search-dialog {
+  position: fixed;
+  z-index: 15;
+  left: 26px;
+  top: 96px;
+  bottom: 76px;
+  margin: 0;
+  width: 310px;
+  max-width: calc(100vw - 40px);
+  max-height: none;
+  padding: 24px 23px;
+  border: 1px solid rgba(244, 246, 225, 0.36);
+  background: linear-gradient(
+    145deg,
+    rgba(233, 240, 225, 0.93),
+    rgba(226, 236, 219, 0.85)
+  );
+  backdrop-filter: blur(22px);
+  box-shadow: 0 12px 50px rgba(5, 39, 48, 0.15);
+  border-radius: 3px;
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #a0b6a5 transparent;
+}
+.search-dialog .sheet-heading h2 {
+  font-size: 29px;
+}
+.search-dialog .sheet-heading p {
+  font-size: 9px;
+}
+.search-dialog .search-instruction {
+  font-size: 11px;
+  line-height: 1.6;
+  margin: 15px 0 20px;
+}
+.search-dialog .search-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 14px;
+  padding-bottom: 0;
+}
+.search-dialog .search-controls select {
+  font-size: 11px;
+  max-width: 120px;
+}
+.search-dialog .radius-field {
+  width: 100%;
+  max-width: none;
+}
+.search-dialog .location-field {
+  grid-column: 1/-1;
+}
+.search-dialog .location-field output {
+  font-size: 12px;
+}
+.search-dialog #search-button {
+  grid-column: 1/-1;
+  width: 100%;
+  margin: 0;
+  background: #2e665f;
+}
+.search-dialog .search-workspace {
+  display: block;
+}
+.search-dialog .route-index {
+  margin-top: 25px;
+}
+.search-dialog .route-index h3 {
+  font-size: 21px;
+  margin-bottom: 11px;
+}
+.search-dialog .route-list {
+  grid-template-columns: 1fr 1fr;
+  max-height: 151px;
+  gap: 4px;
+}
+.search-dialog .route-result {
+  padding: 7px 3px;
+  gap: 6px;
+}
+.search-dialog .route-result strong {
+  font-size: 9px;
+}
+.search-dialog .route-result small {
+  font-size: 8px;
+}
+.search-dialog .result-summary {
+  font-size: 11px;
+  line-height: 1.7;
+  margin-top: 19px;
+}
+.search-dialog .map-note {
+  font-size: 9px;
+}
+.search-dialog .route-detail {
+  margin-top: 21px;
+}
+.search-dialog .detail-ledger > div {
+  font-size: 9px;
+  gap: 10px;
+  margin: 7px 0;
+}
+.search-dialog .detail-note {
+  font-size: 9px;
+}
+.search-dialog .follow-button {
+  background: #2e665f;
+  font-size: 11px;
+}
+.search-dialog .flat-chart {
+  margin-top: 18px;
+}
+.flat-chart summary {
+  cursor: pointer;
+  font-size: 9px;
+  color: #6d8981;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.flat-chart .map-frame {
+  min-height: 250px;
+  height: 250px;
+  margin-top: 14px;
+}
+.flat-chart #atlas-map {
+  height: 250px;
+}
+.is-searching .welcome,
+.is-searching .journey,
+.is-searching #scene-tag {
+  display: none;
+}
+.is-searching .scene-controls {
+  bottom: auto;
+  top: 85px;
+  right: 36px;
+}
+.scene-help {
+  position: fixed;
+  right: 36px;
+  bottom: 77px;
+  z-index: 7;
+  margin: 0;
+  text-align: right;
+  color: #d5e6dc;
+  font-size: 10px;
+  line-height: 1.8;
+  text-shadow: 0 1px 12px #143c4c;
+  pointer-events: none;
+}
+.ocean-tooltip {
+  position: fixed;
+  z-index: 21;
+  padding: 9px 13px;
+  font-size: 11px;
+  color: #e7eedb;
+  background: rgba(11, 53, 62, 0.83);
+  backdrop-filter: blur(12px);
+  border-radius: 2px;
+  pointer-events: none;
+}
+.route-chart {
+  display: none;
+}
+.no-webgl .search-dialog {
+  width: 650px;
+}
+.no-webgl .scene-help {
+  display: none;
+}
+@media (max-width: 800px) {
+  .search-dialog {
+    left: 20px;
+    top: 90px;
+    bottom: 68px;
+    width: 290px;
+    padding: 21px;
+  }
+  .is-searching .scene-controls {
+    top: 78px;
+    right: 22px;
+  }
+  .scene-help {
+    right: 22px;
+    font-size: 9px;
+    max-width: 260px;
+  }
+}
+@media (max-width: 600px) {
+  .search-dialog {
+    left: 12px;
+    right: 12px;
+    bottom: 49px;
+    top: auto;
+    width: auto;
+    max-width: none;
+    max-height: 39svh;
+    padding: 17px 19px;
+  }
+  .search-dialog .sheet-heading h2 {
+    font-size: 25px;
+  }
+  .search-dialog .sheet-heading p {
+    display: none;
+  }
+  .search-dialog .search-instruction {
+    font-size: 10px;
+    margin: 10px 0 14px;
+  }
+  .search-dialog .search-controls {
+    gap: 12px 20px;
+    grid-template-columns: 1fr 1fr;
+  }
+  .search-dialog .location-field {
+    grid-column: 1;
+    gap: 5px;
+  }
+  .search-dialog #search-button {
+    grid-column: 2;
+    font-size: 10px;
+    padding: 10px 12px;
+  }
+  .search-dialog .location-field output {
+    font-size: 10px;
+  }
+  .search-dialog .route-index {
+    margin-top: 19px;
+  }
+  .search-dialog .route-list {
+    max-height: 94px;
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+  .search-dialog .result-summary {
+    font-size: 10px;
+    margin-top: 15px;
+  }
+  .search-dialog .flat-chart {
+    margin-top: 13px;
+  }
+  .search-dialog .detail-ledger > div {
+    font-size: 10px;
+  }
+  .is-searching .scene-controls {
+    top: 74px;
+    right: 18px;
+  }
+  .scene-help {
+    top: 118px;
+    bottom: auto;
+    right: 18px;
+    font-size: 8px;
+    max-width: 240px;
+  }
+  .is-searching .scene-footer > p:first-child {
+    max-width: 190px;
+  }
+  .no-webgl .search-dialog {
+    width: auto;
+    max-height: 70svh;
+  }
+  .is-searching .masthead nav button:first-child {
+    display: inline-block;
+  }
+  .is-searching .masthead nav {
+    gap: 12px;
+  }
+  .is-searching .masthead {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+  .is-searching .wordmark {
+    font-size: 20px;
+  }
+}
+.is-above .scene-shade {
+  background: linear-gradient(0deg, rgba(5, 40, 48, 0.22), transparent 70%);
+}
+.search-dialog .location-field {
+  grid-column: 1;
+  gap: 6px;
+}
+.search-dialog .location-field output {
+  font-size: 10px;
+}
+.search-dialog #search-button {
+  grid-column: 2;
+  font-size: 10px;
+  padding: 11px 12px;
+}
+.search-dialog .map-column {
+  display: flex;
+  flex-direction: column;
+}
+.search-dialog .flat-chart {
+  order: 4;
+  margin-top: 10px;
+}
+.search-dialog .result-summary {
+  order: 0;
+}
+.search-dialog .map-note {
+  order: 1;
+}
+.search-dialog .reset-button {
+  order: 2;
+  text-align: left;
+}
+.search-dialog .route-index {
+  margin-top: 20px;
+}
+.scene-controls .atlas-camera-control {
+  display: none;
+  font-size: 15px;
+  padding: 6px 11px;
+}
+.is-above .scene-controls .atlas-camera-control {
+  display: block;
+}
+.is-searching .scene-help {
+  max-width: 345px;
+}

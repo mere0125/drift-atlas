@@ -1,6 +1,7 @@
 import * as THREE from "./vendor/three.min.js";
 import { Water } from "./vendor/Water.js";
 import { Sky } from "./vendor/Sky.js";
+import { createAtlas, geoToWorld } from "./atlas-scene.js";
 
 const canvas = document.querySelector("#ocean-scene");
 const reducedMotion = window.matchMedia(
@@ -230,6 +231,14 @@ try {
 
   const pathGroup = new THREE.Group();
   scene.add(pathGroup);
+  const atlas = createAtlas({ scene, camera, canvas });
+  let searching = false,
+    atlasYaw = 0,
+    atlasPitch = mobile ? 1.36 : 0.94,
+    atlasZoom = 1;
+  let drag = null;
+  const touches = new Map();
+  let pinchDistance = null;
   let rows = [],
     points = [],
     selectedIndex = 0,
@@ -267,24 +276,7 @@ try {
     if (newRoute) {
       routeId = detail.id;
       rows = detail.rows;
-      const mercator = (row) => [
-        (row.longitude * Math.PI) / 180,
-        Math.log(Math.tan(Math.PI / 4 + (row.latitude * Math.PI) / 360)),
-      ];
-      const coords = rows.map(mercator);
-      const xs = coords.map((p) => p[0]),
-        ys = coords.map((p) => p[1]);
-      const xmin = Math.min(...xs),
-        xmax = Math.max(...xs),
-        ymin = Math.min(...ys),
-        ymax = Math.max(...ys);
-      const scale = 115 / Math.max(xmax - xmin, ymax - ymin, 0.004);
-      const cx = (xmin + xmax) / 2,
-        cy = (ymin + ymax) / 2;
-      points = coords.map(
-        (p) =>
-          new THREE.Vector3((p[0] - cx) * scale, 1.25, -(p[1] - cy) * scale),
-      );
+      points = rows.map((row) => geoToWorld(row.longitude, row.latitude, 2.1));
       disposePaths();
       let segment = [];
       function addSegment() {
@@ -325,17 +317,116 @@ try {
   }
 
   window.addEventListener("drift:position", (event) => setRoute(event.detail));
+  window.addEventListener("drift:results", (event) =>
+    atlas.setResults(event.detail),
+  );
+  window.addEventListener("drift:search-marker", (event) =>
+    atlas.setSearch(event.detail.center, event.detail.radiusKm),
+  );
+  window.addEventListener("drift:selection", (event) =>
+    atlas.setSelected(event.detail.id),
+  );
+  window.addEventListener("drift:pending", () => atlas.setPending());
+  window.addEventListener("drift:search-open", () => {
+    searching = true;
+    atlas.setSearching(true);
+    setView("above");
+  });
+  window.addEventListener("drift:search-close", () => {
+    searching = false;
+    atlas.setSearching(false);
+    setView("surface");
+  });
+  if (window.driftAtlasSnapshot) atlas.setResults(window.driftAtlasSnapshot);
+  canvas.addEventListener("pointerdown", (event) => {
+    if (view !== "above") return;
+    touches.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    if (touches.size > 1) {
+      drag = null;
+      pinchDistance = null;
+      return;
+    }
+    drag = { x: event.clientX, y: event.clientY, moved: 0 };
+    canvas.setPointerCapture(event.pointerId);
+  });
+  canvas.addEventListener("pointermove", (event) => {
+    if (touches.has(event.pointerId))
+      touches.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    if (touches.size === 2) {
+      const [a, b] = [...touches.values()];
+      const distance = Math.hypot(a.x - b.x, a.y - b.y);
+      if (pinchDistance && distance > 0)
+        atlasZoom = THREE.MathUtils.clamp(
+          (atlasZoom * pinchDistance) / distance,
+          0.6,
+          2.2,
+        );
+      pinchDistance = distance;
+      return;
+    }
+    if (!drag) return;
+    const dx = event.clientX - drag.x,
+      dy = event.clientY - drag.y;
+    drag.moved += Math.abs(dx) + Math.abs(dy);
+    if (drag.moved > 5) {
+      atlasYaw -= dx * 0.004;
+      atlasPitch = THREE.MathUtils.clamp(atlasPitch + dy * 0.003, 0.55, 1.47);
+    }
+    drag.x = event.clientX;
+    drag.y = event.clientY;
+  });
+  canvas.addEventListener("pointerup", (event) => {
+    if (drag && drag.moved < 6) atlas.pick(event);
+    drag = null;
+    touches.delete(event.pointerId);
+    pinchDistance = null;
+    if (canvas.hasPointerCapture(event.pointerId))
+      canvas.releasePointerCapture(event.pointerId);
+  });
+  canvas.addEventListener("pointercancel", (event) => {
+    drag = null;
+    touches.delete(event.pointerId);
+    pinchDistance = null;
+  });
+  document.querySelector("#atlas-zoom-in").addEventListener("click", () => {
+    atlasZoom = Math.max(0.6, atlasZoom * 0.8);
+  });
+  document.querySelector("#atlas-zoom-out").addEventListener("click", () => {
+    atlasZoom = Math.min(2.2, atlasZoom * 1.25);
+  });
+  document.querySelector("#atlas-reset").addEventListener("click", () => {
+    atlasYaw = 0;
+    atlasPitch = mobile ? 1.36 : 0.94;
+    atlasZoom = 1;
+  });
+  canvas.addEventListener(
+    "wheel",
+    (event) => {
+      if (view !== "above") return;
+      event.preventDefault();
+      atlasZoom = THREE.MathUtils.clamp(
+        atlasZoom * Math.exp(event.deltaY * 0.001),
+        0.6,
+        2.2,
+      );
+    },
+    { passive: false },
+  );
   window.addEventListener("drift:home", () => {
     following = false;
     pathGroup.visible = false;
     routeId = null;
+    if (searching) setView("above");
   });
-  document
-    .querySelector("#view-surface")
-    .addEventListener("click", () => setView("surface"));
-  document
-    .querySelector("#view-above")
-    .addEventListener("click", () => setView("above"));
+  document.querySelector("#view-surface").addEventListener("click", () => {
+    setView("surface");
+    if (searching) window.dispatchEvent(new CustomEvent("drift:exit-atlas"));
+  });
+  document.querySelector("#view-above").addEventListener("click", () => {
+    setView("above");
+    if (!following && !searching)
+      window.dispatchEvent(new CustomEvent("drift:enter-atlas"));
+  });
   function setView(next) {
     view = next;
     document.body.classList.toggle("is-above", view === "above");
@@ -389,7 +480,10 @@ try {
     const t = elapsed;
     water.material.uniforms.time.value = t * 0.7 + 2.4;
     sky.material.uniforms.cloudTime.value = t;
-    pathGroup.visible = following;
+    pathGroup.visible = following && !searching;
+    atlas.showAbove(view === "above");
+    drifter.visible = !searching;
+    halo.visible = !searching;
     let focus;
     if (following && points.length) {
       focus = points[selectedIndex] || points[0];
@@ -411,13 +505,17 @@ try {
     );
     halo.scale.setScalar(1.15 + Math.sin(t * 0.9) * 0.18);
     if (view === "above") {
-      if (following) {
-        wantedPosition.set(0, mobile ? 270 : 140, mobile ? 150 : 92);
-        wantedTarget.set(0, 0, 0);
-      } else {
-        wantedPosition.set(2, 40, 36);
-        wantedTarget.set(4, 0, -10);
-      }
+      const distance = (mobile ? 680 : 310) * atlasZoom;
+      wantedTarget.set(mobile ? 0 : -34, 0, mobile ? 75 : 0);
+      wantedPosition
+        .copy(wantedTarget)
+        .add(
+          new THREE.Vector3(
+            Math.sin(atlasYaw) * Math.cos(atlasPitch) * distance,
+            Math.sin(atlasPitch) * distance,
+            Math.cos(atlasYaw) * Math.cos(atlasPitch) * distance,
+          ),
+        );
     } else if (following) {
       wantedPosition.set(
         focus.x - 4 + pointer.x * 0.5,
@@ -447,7 +545,7 @@ try {
     if (tag) {
       tag.style.left = `${(screenPosition.x * 0.5 + 0.5) * window.innerWidth + 12}px`;
       tag.style.top = `${(-screenPosition.y * 0.5 + 0.5) * window.innerHeight}px`;
-      tag.style.opacity = screenPosition.z < 1 ? "1" : "0";
+      tag.style.opacity = !searching && screenPosition.z < 1 ? "1" : "0";
     }
   }
   requestAnimationFrame(animate);
@@ -457,4 +555,6 @@ try {
     error,
   );
   document.querySelector(".scene-controls").hidden = true;
+  document.body.classList.add("no-webgl");
+  document.querySelector(".flat-chart").open = true;
 }

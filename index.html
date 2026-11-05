@@ -18,6 +18,12 @@
       aria-label="Animated illustrative ocean with a surface drifter"
     ></canvas>
     <div class="scene-shade" aria-hidden="true"></div>
+    <div id="ocean-tooltip" class="ocean-tooltip" role="tooltip" hidden></div>
+    <p id="scene-help" class="scene-help" hidden>
+      Click water to choose a place. Click a bright route to open it.<br />Faint
+      routes are other records from the same month.<br />Drag to turn the chart.
+      Scroll to look closer.
+    </p>
     <header class="masthead">
       <button id="home-button" class="wordmark" type="button">
         Drift Atlas
@@ -136,7 +142,7 @@
       >
         Waterline</button
       ><button id="view-above" type="button" aria-pressed="false">
-        Above the water</button
+        Sea chart</button
       ><button
         id="pause-ocean"
         type="button"
@@ -144,6 +150,30 @@
         aria-label="Pause ocean animation"
       >
         Ⅱ
+      </button>
+      <button
+        id="atlas-zoom-in"
+        class="atlas-camera-control"
+        type="button"
+        aria-label="Zoom into the sea chart"
+      >
+        +
+      </button>
+      <button
+        id="atlas-zoom-out"
+        class="atlas-camera-control"
+        type="button"
+        aria-label="Zoom out of the sea chart"
+      >
+        −
+      </button>
+      <button
+        id="atlas-reset"
+        class="atlas-camera-control"
+        type="button"
+        aria-label="Reset the sea chart view"
+      >
+        ↺
       </button>
     </div>
     <footer class="scene-footer">
@@ -153,16 +183,17 @@
         <a href="peer-test.html">Peer test</a>
       </p>
     </footer>
-    <dialog
+    <section
       id="search-dialog"
       class="search-dialog"
       aria-labelledby="explorer-title"
+      hidden
     >
       <section id="explorer">
         <div class="sheet-heading">
           <div>
             <p>The 2024 archive</p>
-            <h2 id="explorer-title">Where shall we look?</h2>
+            <h2 id="explorer-title">Choose a place.</h2>
           </div>
           <button
             class="close-dialog"
@@ -174,8 +205,7 @@
           </button>
         </div>
         <p class="search-instruction">
-          Choose a point on the chart. Set the month and how close an instrument
-          needed to pass.
+          Click a place on the sea, then choose a month and search radius.
         </p>
         <form id="search-form" class="search-controls">
           <label
@@ -220,29 +250,29 @@
         </form>
         <div class="search-workspace">
           <div class="map-column">
-            <div id="map-frame" class="map-frame">
-              <svg
-                id="atlas-map"
-                role="img"
-                aria-label="Choose a search location on the western North Atlantic chart"
-              ></svg>
-              <div
-                id="map-tooltip"
-                class="map-tooltip"
-                role="tooltip"
-                hidden
-              ></div>
-              <div id="map-loading" class="map-loading" aria-live="polite">
-                Opening NOAA records…
+            <details class="flat-chart">
+              <summary>Open the flat chart</summary>
+              <div id="map-frame" class="map-frame">
+                <svg
+                  id="atlas-map"
+                  role="img"
+                  aria-label="Choose a search location on the western North Atlantic chart"
+                ></svg>
+                <div
+                  id="map-tooltip"
+                  class="map-tooltip"
+                  role="tooltip"
+                  hidden
+                ></div>
+                <div id="map-loading" class="map-loading" aria-live="polite">
+                  Opening NOAA records…
+                </div>
               </div>
-            </div>
+            </details>
             <p id="result-summary" class="result-summary" aria-live="polite">
               Loading records…
             </p>
-            <p class="map-note">
-              Open circle: first position. Filled circle: last. Lines break at
-              gaps longer than 12 hours.
-            </p>
+            <p class="map-note">Tracks break at gaps longer than 12 hours.</p>
             <button id="example-button" class="reset-button" type="button">
               Reset to May - 36°N, 69°W
             </button>
@@ -260,7 +290,7 @@
           </aside>
         </div>
       </section>
-    </dialog>
+    </section>
     <dialog
       id="about-dialog"
       class="about-dialog"
@@ -287,6 +317,11 @@
           search radius. Select one to explore its visible regional record
           before and after that encounter.
         </p>
+        <p>
+          On the sea chart, bright routes match your search. Faint lines show
+          other drifters recorded in the same month, so you can see where
+          observations are available.
+        </p>
         <h3>What you are following</h3>
         <p>
           NOAA's Global Drifter Program deploys satellite-tracked scientific
@@ -307,9 +342,10 @@
         <p>
           The animated sea is an illustrative setting, not a reconstruction of
           weather or waves. In follow mode the line and marker use real NOAA
-          positions in a local Mercator coordinate frame; the geographic chart
-          provides the coastline and coordinates. The small float is a
-          simplified representation of a drifter.
+          positions in a Mercator coordinate frame. The sea chart uses a real
+          Natural Earth coastline and labelled coordinates. Land is raised for
+          clarity; its height does not represent measured terrain. The small
+          float is a simplified representation of a drifter.
         </p>
         <p>
           One instrument cannot represent every surrounding current. An empty
