@@ -1065,8 +1065,23 @@
   }
 
   function publishAtlas() {
-    document.querySelector("#toggle-results").textContent =
-      `${state.matches.length} ${state.matches.length === 1 ? "drifter" : "drifters"} ↗`;
+    const resultButton = document.querySelector("#toggle-results");
+    const shell = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    shell.classList.add("shell-icon");
+    shell.setAttribute("aria-hidden", "true");
+    shell.setAttribute("focusable", "false");
+    const symbol = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "use",
+    );
+    symbol.setAttribute("href", "assets/icons.svg#shell");
+    shell.append(symbol);
+    resultButton.replaceChildren(
+      document.createTextNode(
+        `${state.matches.length} ${state.matches.length === 1 ? "drifter" : "drifters"}`,
+      ),
+      shell,
+    );
     const contextRoutes = [...state.byMonthId[state.month].entries()].map(
       ([id, rows]) => ({ id, segments: splitAtGaps(rows) }),
     );

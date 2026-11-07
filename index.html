@@ -10,6 +10,7 @@
     />
     <title>Drift Atlas - Mere Cui</title>
     <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="icons.css" />
   </head>
   <body>
     <a class="skip-link" href="#open-search">Skip to the archive search</a>
@@ -44,7 +45,10 @@
         </p>
         <div class="welcome-actions">
           <button id="begin-button" class="primary-button" type="button">
-            Choose a place <span aria-hidden="true">↗</span></button
+            Choose a place
+            <svg class="shell-icon" aria-hidden="true" focusable="false">
+              <use href="assets/icons.svg#shell"></use>
+            </svg></button
           ><button
             id="quick-follow"
             class="quiet-button"
@@ -75,7 +79,10 @@
             <p id="journey-intro"></p>
             <p id="trail-scope">Waterline trail: previous 14 days.</p>
             <button id="change-drifter" type="button">
-              Choose another drifter ↗
+              Choose another drifter
+              <svg class="shell-icon" aria-hidden="true" focusable="false">
+                <use href="assets/icons.svg#shell"></use>
+              </svg>
             </button>
           </div>
           <div class="record-now" aria-live="polite">
@@ -410,7 +417,10 @@
           Coastline: Natural Earth via world-atlas.
         </p>
         <button id="about-explore" class="primary-button" type="button">
-          Explore the archive ↗
+          Explore the archive
+          <svg class="shell-icon" aria-hidden="true" focusable="false">
+            <use href="assets/icons.svg#shell"></use>
+          </svg>
         </button>
       </article>
     </dialog>
